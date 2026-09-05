@@ -1,17 +1,26 @@
 {
-  "name": "tradesheets-v2",
+  "name": "fieldms",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:fault-finder": "node scripts/check-fault-finder.mjs",
+    "build:verify": "node scripts/build-verify-sql.mjs",
+    "doctor": "node scripts/doctor.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.105.0",
+    "@supabase/ssr": "^0.10.2",
+    "@supabase/supabase-js": "^2.103.0",
     "next": "16.2.3",
+    "qrcode.react": "^4.2.0",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "resend": "^6.12.4",
+    "twilio": "^6.0.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

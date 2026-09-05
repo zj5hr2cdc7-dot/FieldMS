@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Skill(run)",
+      "Bash(lsof -i :3000 -sTCP:LISTEN -P)",
+      "Bash(npx untun@latest tunnel http://localhost:3000)",
+      "Bash(npm run *)"
+    ]
+  }
+}

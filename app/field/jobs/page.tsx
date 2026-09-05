@@ -1,0 +1,71 @@
+'use client'
+
+import { useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
+import { useAuthContext } from '@/context/AuthContext'
+import { getMyJobs, getMyJobHistory } from '@/lib/field'
+import type { Job } from '@/types/database'
+
+const PRIORITY_DOT: Record<string, string> = { urgent: 'bg-red-500', high: 'bg-amber-500', medium: 'bg-sky-500', low: 'bg-slate-400' }
+
+export default function FieldJobsPage() {
+  const { session } = useAuthContext()
+  const userId = session?.user?.id
+  const [tab, setTab] = useState<'active' | 'history'>('active')
+  const [active, setActive] = useState<Job[]>([])
+  const [history, setHistory] = useState<Job[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const refresh = useCallback(async () => {
+    if (!userId) return
+    const [a, h] = await Promise.all([getMyJobs(userId), getMyJobHistory(userId)])
+    setActive(a); setHistory(h); setLoading(false)
+  }, [userId])
+
+  useEffect(() => { let a = true; (async () => { try { await refresh() } catch { if (a) setLoading(false) } })(); return () => { a = false } }, [refresh])
+
+  const list = tab === 'active' ? active : history
+
+  return (
+    <div className="space-y-4">
+      <h1 className="text-xl font-bold text-slate-900">My jobs</h1>
+      <div className="flex gap-2">
+        {(['active', 'history'] as const).map((t) => (
+          <button key={t} type="button" onClick={() => setTab(t)}
+            className={`flex-1 rounded-lg py-2 text-sm font-semibold ${tab === t ? 'bg-ink text-white' : 'bg-white text-slate-600 border border-slate-200'}`}>
+            {t === 'active' ? `Active (${active.length})` : `Completed (${history.length})`}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <p className="py-10 text-center text-slate-400">Loading…</p>
+      ) : list.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-400">
+          {tab === 'active' ? 'No jobs assigned to you.' : 'No completed jobs yet.'}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {list.map((job) => (
+            <Link key={job.id} href={`/field/jobs/${job.id}`} className="block rounded-xl border border-slate-200 bg-white p-4 shadow-sm active:bg-slate-50">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-900 leading-tight">{job.title}</p>
+                  {job.customer_name && <p className="text-sm text-slate-500 truncate">{job.customer_name}</p>}
+                  {job.customer_address && <p className="text-xs text-slate-400 truncate">{job.customer_address}</p>}
+                </div>
+                <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${PRIORITY_DOT[job.priority] ?? 'bg-slate-400'}`} />
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <span className={`rounded-full px-2 py-0.5 text-xs font-bold uppercase ${job.status === 'in_progress' ? 'bg-green-100 text-green-700' : job.status === 'completed' ? 'bg-slate-100 text-slate-500' : 'bg-sky-100 text-sky-700'}`}>
+                  {job.status.replace('_', ' ')}
+                </span>
+                {job.due_date && <span className="text-xs text-slate-400">{new Date(job.due_date).toLocaleDateString('en-AU')}</span>}
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}

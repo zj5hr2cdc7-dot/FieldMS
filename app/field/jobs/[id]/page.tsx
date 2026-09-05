@@ -1,0 +1,170 @@
+'use client'
+
+import { use, useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useAuthContext } from '@/context/AuthContext'
+import { getJob, updateJob } from '@/lib/jobs'
+import { updateJobStatusOfflineAware } from '@/lib/offline-queue'
+import { startEntry, endEntry, getOpenEntries, type TimeEntry } from '@/lib/time-tracking'
+import type { Job, JobStatus } from '@/types/database'
+
+const STATUS_STEP: Partial<Record<JobStatus, { next: JobStatus; label: string }>> = {
+  open: { next: 'in_progress', label: 'Start job' },
+  in_progress: { next: 'completed', label: 'Complete job' },
+}
+
+/** Pull hazard/access hints out of the free-text description (best-effort). */
+function extractLines(desc: string | null, keywords: string[]): string[] {
+  if (!desc) return []
+  return desc.split('\n').filter((l) => keywords.some((k) => l.toLowerCase().includes(k)))
+}
+
+export default function FieldJobDetail({ params }: { params: Promise<{ id: string }> }) {
+  const { id: jobId } = use(params)
+  const router = useRouter()
+  const { currentTenant, session } = useAuthContext()
+  const userId = session?.user?.id
+
+  const [job, setJob] = useState<Job | null>(null)
+  const [open, setOpen] = useState<TimeEntry[]>([])
+  const [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<string | null>(null)
+
+  const refresh = useCallback(async () => {
+    const j = await getJob(jobId)
+    setJob(j)
+    if (userId) setOpen(await getOpenEntries(userId))
+    setLoading(false)
+  }, [jobId, userId])
+
+  useEffect(() => { let a = true; (async () => { try { await refresh() } catch { if (a) setLoading(false) } })(); return () => { a = false } }, [refresh])
+
+  if (loading) return <p className="py-10 text-center text-slate-400">Loading job…</p>
+  if (!job) return <p className="py-10 text-center text-slate-400">Job not found.</p>
+
+  const step = STATUS_STEP[job.status]
+  const travelOpen = open.find((e) => e.kind === 'travel' && e.job_id === jobId)
+  const hazards = extractLines(job.description, ['hazard', 'asbestos', 'live', 'height', 'confined'])
+  const access = extractLines(job.description, ['gate', 'code', 'park', 'access', 'key', 'ppe'])
+
+  const advance = async () => {
+    if (!step) return
+    setBusy(true); setMsg(null)
+    try {
+      const { queued } = await updateJobStatusOfflineAware(job.id, step.next)
+      setJob({ ...job, status: step.next })
+      // Auto-close travel when starting the job
+      if (step.next === 'in_progress' && travelOpen) await endEntry(travelOpen.id)
+      setMsg(queued ? 'Saved offline — will sync when back in range.' : `Job marked ${step.next.replace('_', ' ')}.`)
+    } catch (e) { setMsg(e instanceof Error ? e.message : 'Failed') } finally { setBusy(false) }
+  }
+
+  const toggleTravel = async () => {
+    if (!currentTenant || !userId) return
+    setBusy(true)
+    try {
+      if (travelOpen) await endEntry(travelOpen.id)
+      else await startEntry(currentTenant.id, userId, 'travel', jobId)
+      await refresh()
+    } finally { setBusy(false) }
+  }
+
+  const mapsUrl = job.customer_address ? `https://maps.google.com/?q=${encodeURIComponent(job.customer_address)}` : null
+
+  return (
+    <div className="space-y-4">
+      <button type="button" onClick={() => router.push('/field/jobs')} className="text-sm font-semibold text-brand-dark">← Jobs</button>
+
+      {/* Header */}
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex items-start justify-between gap-2">
+          <h1 className="text-lg font-bold text-slate-900 leading-tight">{job.title}</h1>
+          <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold uppercase ${job.status === 'in_progress' ? 'bg-green-100 text-green-700' : job.status === 'completed' ? 'bg-slate-100 text-slate-500' : 'bg-sky-100 text-sky-700'}`}>
+            {job.status.replace('_', ' ')}
+          </span>
+        </div>
+        {job.customer_name && <p className="mt-1 text-sm font-medium text-slate-700">{job.customer_name}</p>}
+        {job.customer_address && <p className="text-sm text-slate-500">{job.customer_address}</p>}
+
+        {/* Quick actions */}
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          {job.customer_phone && (
+            <a href={`tel:${job.customer_phone}`} className="flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white py-3 text-sm font-semibold text-slate-700 active:bg-slate-50">
+              📞 Call
+            </a>
+          )}
+          {mapsUrl && (
+            <a href={mapsUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white py-3 text-sm font-semibold text-slate-700 active:bg-slate-50">
+              🧭 Navigate
+            </a>
+          )}
+        </div>
+      </div>
+
+      {msg && <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">{msg}</div>}
+
+      {/* Primary status action — big buttons for gloved hands */}
+      {step && (
+        <button type="button" disabled={busy} onClick={advance}
+          className="w-full rounded-xl bg-brand py-4 text-lg font-bold text-white shadow-sm active:bg-brand-dark disabled:opacity-60">
+          {busy ? '…' : step.label}
+        </button>
+      )}
+      {job.status === 'open' && (
+        <button type="button" disabled={busy} onClick={toggleTravel}
+          className="w-full rounded-xl border border-slate-200 bg-white shadow-sm py-3 text-base font-semibold text-slate-700 active:bg-slate-50 disabled:opacity-60">
+          {travelOpen ? 'Stop travel' : 'Start travel to site'}
+        </button>
+      )}
+
+      {/* Hazards */}
+      {hazards.length > 0 && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-red-700">⚠ Site hazards</p>
+          <ul className="mt-1 space-y-0.5">{hazards.map((h, i) => <li key={i} className="text-sm text-red-800">{h}</li>)}</ul>
+        </div>
+      )}
+
+      {/* Access / parking / PPE */}
+      {access.length > 0 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Access & site info</p>
+          <ul className="mt-1 space-y-0.5">{access.map((h, i) => <li key={i} className="text-sm text-amber-800">{h}</li>)}</ul>
+        </div>
+      )}
+
+      {/* Scope / notes */}
+      {job.description && (
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Scope & notes</p>
+          <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">{job.description}</p>
+        </div>
+      )}
+
+      {/* On-site tools */}
+      <div className="grid grid-cols-2 gap-3">
+        <Link href={`/field/forms?job=${job.id}`} className="rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm active:bg-slate-50">
+          <p className="text-2xl">📋</p><p className="mt-1 text-sm font-semibold text-slate-700">Forms</p>
+        </Link>
+        <Link href={`/field/photos?job=${job.id}`} className="rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm active:bg-slate-50">
+          <p className="text-2xl">📷</p><p className="mt-1 text-sm font-semibold text-slate-700">Photos</p>
+        </Link>
+        <Link href={`/field/assistant?job=${job.id}`} className="rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm active:bg-slate-50">
+          <p className="text-2xl">⚡</p><p className="mt-1 text-sm font-semibold text-slate-700">Fault Finder</p>
+        </Link>
+        <a href="/field/messages" className="rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm active:bg-slate-50">
+          <p className="text-2xl">💬</p><p className="mt-1 text-sm font-semibold text-slate-700">Message office</p>
+        </a>
+      </div>
+
+      {job.status === 'completed' && (
+        <button type="button" disabled={busy} onClick={async () => { setBusy(true); try { await updateJob(job.id, { status: 'in_progress' }); await refresh() } finally { setBusy(false) } }}
+          className="w-full rounded-lg border border-slate-300 py-2.5 text-sm font-semibold text-slate-500">
+          Reopen job
+        </button>
+      )}
+    </div>
+  )
+}
