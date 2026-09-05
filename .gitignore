@@ -30,8 +30,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files — never commit real values
 .env*
+# except the template, which holds variable NAMES only and is what you work
+# through when setting up a new environment (Vercel, a new laptop, CI)
+!.env.example
 
 # vercel
 .vercel
