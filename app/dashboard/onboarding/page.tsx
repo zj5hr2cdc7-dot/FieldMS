@@ -389,6 +389,28 @@ export default function OnboardingWizard() {
           <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {TRADES.map((t) => {
               const on = trades.includes(t.key)
+              // Not selectable yet: we would be taking money for a product
+              // that does not cover this trade. See TRADES in lib/onboarding.
+              if (t.comingSoon) {
+                return (
+                  <div
+                    key={t.key}
+                    aria-disabled="true"
+                    className="flex cursor-not-allowed items-start gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-left opacity-70"
+                  >
+                    <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={t.icon} /></svg>
+                    </span>
+                    <span>
+                      <span className="block text-sm font-bold text-slate-500">{t.label}</span>
+                      <span className="mt-0.5 block text-xs text-slate-400">{t.hint}</span>
+                    </span>
+                    <span className="ml-auto mt-0.5 shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600">
+                      Coming soon
+                    </span>
+                  </div>
+                )
+              }
               return (
                 <button
                   key={t.key}

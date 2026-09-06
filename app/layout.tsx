@@ -6,14 +6,13 @@ import OfflineSync from "@/components/OfflineSync";
 export const metadata: Metadata = {
   metadataBase: new URL("https://app.fieldms.com"),
   title: {
-    default: "FieldMS — Job management software for electricians & HVAC",
+    default: "FieldMS — Job management software for Australian electricians",
     template: "%s · FieldMS",
   },
   description:
-    "The all-in-one platform for Australian electricians and HVAC technicians. Quote, schedule, invoice, stay compliant and use AI to save time — built from real feedback from the trade.",
+    "The all-in-one platform for Australian electricians. Quote, schedule, invoice, stay compliant and use AI to save time — built from real feedback from the trade. HVAC and refrigeration support is coming soon.",
   keywords: [
     "electrician software",
-    "HVAC software",
     "field service management",
     "electrical job management",
     "AS/NZS 3000 compliance",
@@ -30,18 +29,18 @@ export const metadata: Metadata = {
     apple: "/fieldms icon.png",
   },
   openGraph: {
-    title: "FieldMS — Job management software for electricians & HVAC",
+    title: "FieldMS — Job management software for Australian electricians",
     description:
-      "Quote, schedule, invoice and stay compliant in one AI-powered platform, built with Australian electricians and HVAC technicians.",
+      "Quote, schedule, invoice and stay compliant in one AI-powered platform, built with Australian electricians.",
     type: "website",
     locale: "en_AU",
     siteName: "FieldMS",
   },
   twitter: {
     card: "summary_large_image",
-    title: "FieldMS — Job management software for electricians & HVAC",
+    title: "FieldMS — Job management software for Australian electricians",
     description:
-      "The all-in-one platform for Australian electricians and HVAC technicians. Built from real feedback from the trade.",
+      "The all-in-one platform for Australian electricians. Built from real feedback from the trade.",
   },
 };
 

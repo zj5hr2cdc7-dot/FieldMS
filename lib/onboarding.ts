@@ -15,10 +15,17 @@ export type { TradeKey }
 
 // ── Trades ──────────────────────────────────────────────────────────────────
 
-export const TRADES: { key: TradeKey; label: string; icon: string; hint: string }[] = [
+/**
+ * `comingSoon` marks a trade we are not ready to serve yet. Fault Finder is an
+ * electrical product and the compliance tooling is built around AS/NZS 3000,
+ * so an HVAC business would today be paying for the job-management half of a
+ * product sold on its electrical strengths. Rather than quietly accept those
+ * signups, the option is shown but not selectable, labelled honestly.
+ */
+export const TRADES: { key: TradeKey; label: string; icon: string; hint: string; comingSoon?: boolean }[] = [
   { key: 'electrical', label: 'Electrical', icon: 'M13 10V3L4 14h7v7l9-11h-7z', hint: 'Fault Finder, AS/NZS 3000, certificates' },
-  { key: 'hvac', label: 'HVAC / Refrigeration', icon: 'M9.5 4a2.5 2.5 0 1 1 2.5 2.5H2M12.5 20a2.5 2.5 0 1 0 2.5-2.5H2M17 6a2 2 0 1 1 2 2H2', hint: 'Jobs, quotes, scheduling and invoicing' },
-  { key: 'air_con', label: 'Air Conditioning', icon: 'M12 3v18M5.6 5.6l12.8 12.8M3 12h18M5.6 18.4L18.4 5.6', hint: 'Split systems, ducted, maintenance' },
+  { key: 'hvac', label: 'HVAC / Refrigeration', icon: 'M9.5 4a2.5 2.5 0 1 1 2.5 2.5H2M12.5 20a2.5 2.5 0 1 0 2.5-2.5H2M17 6a2 2 0 1 1 2 2H2', hint: 'On the roadmap, not available yet', comingSoon: true },
+  { key: 'air_con', label: 'Air Conditioning', icon: 'M12 3v18M5.6 5.6l12.8 12.8M3 12h18M5.6 18.4L18.4 5.6', hint: 'On the roadmap, not available yet', comingSoon: true },
   { key: 'solar', label: 'Solar', icon: 'M12 3v2M12 19v2M3 12h2M19 12h2M6 6l1.5 1.5M16.5 16.5 18 18M18 6l-1.5 1.5M7.5 16.5 6 18M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z', hint: 'Installs, inverters, compliance' },
   { key: 'data_comms', label: 'Data & Communications', icon: 'M5 12.55a11 11 0 0 1 14 0M8.5 16a6 6 0 0 1 7 0M2 9a16 16 0 0 1 20 0M12 20h.01', hint: 'Structured cabling, NBN, networks' },
   { key: 'security', label: 'Security', icon: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z', hint: 'Alarms, CCTV, access control' },

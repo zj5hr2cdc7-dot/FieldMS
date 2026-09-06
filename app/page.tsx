@@ -75,7 +75,7 @@ export default function Home() {
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pt-14 pb-16 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:pt-24 lg:pb-24">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full bg-green-50 px-3.5 py-1.5 text-xs font-bold text-brand-dark ring-1 ring-green-200">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand" /> Built with electricians &amp; HVAC techs
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand" /> Built with Australian electricians
             </span>
             <h1 className="mt-6 text-4xl font-black leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.4rem]">
               Spend less time managing paperwork.{' '}
@@ -141,13 +141,13 @@ export default function Home() {
       {/* ── SOCIAL PROOF STRIP ── */}
       <section className="border-y border-slate-100 bg-slate-50/60 py-6">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-10 gap-y-2 px-4 text-sm font-medium text-slate-400 sm:px-6">
-          <span>Trusted by sparkies &amp; HVAC techs across Australia</span>
-          <span className="hidden sm:inline">·</span>
-          <span>Xero &amp; MYOB sync</span>
+          <span>Built with sparkies across Australia</span>
           <span className="hidden sm:inline">·</span>
           <span>AS/NZS 3000 aware</span>
           <span className="hidden sm:inline">·</span>
           <span>Works in switchrooms</span>
+          <span className="hidden sm:inline">·</span>
+          <span>HVAC &amp; refrigeration coming soon</span>
         </div>
       </section>
 
@@ -205,7 +205,7 @@ export default function Home() {
           </div>
           <div className="mt-12 grid gap-6 md:grid-cols-3">
             {[
-              ['1', 'Set up in minutes', 'Answer a few questions and FieldMS tunes itself to your trade: electrical, HVAC or both.'],
+              ['1', 'Set up in minutes', 'Answer a few questions and FieldMS tunes itself to your electrical work. HVAC and refrigeration are coming soon.'],
               ['2', 'Connect your world', 'Bring in your wholesaler pricing, and push invoices to Xero to keep the books clean.'],
               ['3', 'Run the day from your phone', 'Quote on site, schedule the crew, capture signatures and invoice before you leave the driveway.'],
             ].map(([n, title, body]) => (
