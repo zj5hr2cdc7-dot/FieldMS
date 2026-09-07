@@ -15,7 +15,7 @@ const HIGHLIGHTS: [string, string][] = [
   ['Your crew, in sync', 'Schedules, timesheets and job updates from the field.'],
 ]
 
-const TRUST = ['Works in switchrooms', 'AS/NZS 3000 aware', 'Xero invoice export']
+const TRUST = ['Works in switchrooms', 'AS/NZS 3000 aware', 'Built in Australia']
 
 export default function LoginPage() {
   const router = useRouter()
@@ -65,7 +65,7 @@ export default function LoginPage() {
   )
 
   return (
-    <AuthShell nav={{ prompt: 'New to FieldMS?', label: 'Start free trial', href: '/signup' }} aside={aside}>
+    <AuthShell nav={{ prompt: 'New to FieldMS?', label: 'Get early access', href: '/signup' }} aside={aside}>
       <div className="card mx-auto w-full max-w-md p-8 shadow-xl sm:p-10">
         <h2 className="text-2xl font-black tracking-tight text-slate-900">Sign in</h2>
         <p className="mt-2 text-sm text-slate-500">Enter your workspace credentials to continue.</p>

@@ -15,7 +15,7 @@ const HIGHLIGHTS: [string, string][] = [
   ['Accounting sync', 'Connect Xero or MYOB to keep your books aligned.'],
 ]
 
-const TRUST = ['14 day free trial', 'No card required', 'Cancel anytime']
+const TRUST = ['Free during early access', 'No card required', 'Built in Australia']
 
 export default function SignupPage() {
   const router = useRouter()
@@ -53,7 +53,7 @@ export default function SignupPage() {
       <Eyebrow>Get started</Eyebrow>
       <AuthHeading lead="Create your FieldMS" accent="workspace" />
       <p className="mt-6 max-w-md text-lg leading-8 text-slate-600">
-        Quoting, scheduling, invoicing and compliance in one platform. Free for 14 days, no card required.
+        Quoting, scheduling, invoicing and compliance in one platform. Free during early access, no card required.
       </p>
       <ul className="mt-10 space-y-4">
         {HIGHLIGHTS.map(([title, body]) => (
@@ -77,7 +77,7 @@ export default function SignupPage() {
     <AuthShell nav={{ prompt: 'Already with us?', label: 'Log in', href: '/login', variant: 'outline' }} aside={aside}>
       <div className="card mx-auto w-full max-w-md p-8 shadow-xl sm:p-10">
         <h2 className="text-2xl font-black tracking-tight text-slate-900">Create your account</h2>
-        <p className="mt-2 text-sm text-slate-500">Set up your workspace and start your free trial.</p>
+        <p className="mt-2 text-sm text-slate-500">Set up your workspace and get started.</p>
 
         {error && (
           <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">

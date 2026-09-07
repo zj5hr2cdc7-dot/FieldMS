@@ -25,7 +25,6 @@ function Icon({ d, className = 'h-5 w-5' }: { d: string; className?: string }) {
 export default function Home() {
   const router = useRouter()
   const { session, loading, userRole } = useAuthContext()
-  const [yearly, setYearly] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
@@ -62,7 +61,7 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <Link href="/login" className="rounded-lg px-3.5 py-2 text-sm font-semibold text-slate-600 transition-colors hover:text-slate-900">Log in</Link>
             <Link href="/signup" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark">
-              Start free trial
+              Get early access
             </Link>
           </div>
         </div>
@@ -91,14 +90,14 @@ export default function Home() {
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="/signup" className="rounded-lg bg-brand px-6 py-3.5 text-center text-sm font-semibold text-white shadow-lg shadow-brand/25 transition-colors hover:bg-brand-dark">
-                Start your free trial
+                Get early access
               </Link>
               <a href="#how" className="rounded-lg border border-slate-300 bg-white px-6 py-3.5 text-center text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50">
                 See how it works
               </a>
             </div>
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-500">
-              {['14 day free trial', 'No card required', 'Cancel anytime'].map((t) => (
+              {['Free during early access', 'No card required', 'Built in Australia'].map((t) => (
                 <span key={t} className="inline-flex items-center gap-1.5"><Icon d={check} className="h-4 w-4 text-brand-dark" /> {t}</span>
               ))}
             </div>
@@ -165,7 +164,7 @@ export default function Home() {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand text-white"><Icon d="M13 10V3L4 14h7v7l9-11h-7z" /></div>
             <h3 className="mt-4 text-xl font-bold">Quote to invoice in a few taps</h3>
             <p className="mt-2 max-w-md leading-7 text-slate-600">
-              Build priced quotes on site with live wholesaler pricing. The customer approves with one tap,
+              Build priced quotes on site from your own material prices. The customer approves with one tap,
               it becomes a job, then an invoice. No phone calls, no chasing, no double entry.
             </p>
             <div className="mt-6 rounded-xl border border-slate-100 bg-slate-50 p-4">
@@ -232,39 +231,40 @@ export default function Home() {
 
       {/* ── PRICING ── */}
       <section id="pricing" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20 sm:px-6 sm:py-28">
-        <div className="text-center">
-          <h2 className="text-3xl font-black tracking-tight sm:text-4xl">Simple, honest pricing.</h2>
-          <p className="mt-4 text-lg text-slate-600">Flexible monthly plans. No contracts, no setup fees.</p>
-          <div className="mt-7 inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 p-1 text-sm font-semibold">
-            <button type="button" onClick={() => setYearly(false)} className={`rounded-md px-4 py-2 transition-colors ${!yearly ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>Monthly</button>
-            <button type="button" onClick={() => setYearly(true)} className={`rounded-md px-4 py-2 transition-colors ${yearly ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>
-              Yearly <span className="text-brand-dark">−20%</span>
-            </button>
-          </div>
+        {/*
+          No prices here on purpose. There is no payment processor connected and
+          no billing or trial mechanism in the product, so advertising specific
+          plan prices, a discount and a "14 day free trial" described something
+          we cannot actually deliver or charge for — misleading conduct under
+          the Australian Consumer Law. Early access is the truth, and it is a
+          better offer anyway. Put the plans back when billing is real.
+        */}
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-3xl font-black tracking-tight sm:text-4xl">Free while we build it with you.</h2>
+          <p className="mt-4 text-lg text-slate-600">
+            FieldMS is in early access with a small group of Australian electricians. It is free to use
+            during early access, there is nothing to pay and no card to enter.
+          </p>
+          <p className="mt-4 text-slate-600">
+            When we introduce paid plans we will tell early access users first, well before anything is
+            charged, and you will be able to export your data or walk away.
+          </p>
+          <Link
+            href="/signup"
+            className="mt-8 inline-block rounded-lg bg-brand px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand/25 transition-colors hover:bg-brand-dark"
+          >
+            Get early access
+          </Link>
         </div>
-        <div className="mt-12 grid gap-5 lg:grid-cols-3">
+        <div className="mt-14 grid gap-5 lg:grid-cols-3">
           {[
-            { name: 'Solo', tagline: 'For sole traders.', price: 39, perUser: false, featured: false, features: ['Quotes, jobs & invoices', 'Compliance certificates', 'Field app'] },
-            { name: 'Team', tagline: 'For growing crews.', price: 89, perUser: true, featured: true, features: ['Everything in Solo', 'Your material prices', 'FieldMS Fault Finder', 'Export invoices to Xero', 'Field app for your crew'] },
-            { name: 'Business', tagline: 'For established operators.', price: 189, perUser: false, featured: false, features: ['Everything in Team', 'Asset & compliance register', 'Roles & permissions', 'Priority support'] },
+            { name: 'Quote to invoice', features: ['Priced quotes on site', 'Customer approves with one tap', 'Jobs, then invoices'] },
+            { name: 'Compliance', features: ['Test sheets against the job', 'Certificates you can hand over', 'Asset & compliance register'] },
+            { name: 'Your crew', features: ['Scheduling and timesheets', 'Field app for technicians', 'FieldMS Fault Finder'] },
           ].map((p) => (
-            <div key={p.name} className={`relative rounded-xl border bg-white p-7 shadow-sm transition-shadow hover:shadow-lg ${p.featured ? 'border-brand ring-2 ring-brand/20' : 'border-slate-200'}`}>
-              {p.featured && (
-                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-brand px-3 py-1 text-xs font-bold text-white">Most popular</span>
-              )}
+            <div key={p.name} className="rounded-xl border border-slate-200 bg-white p-7 shadow-sm transition-shadow hover:shadow-lg">
               <h3 className="text-lg font-bold">{p.name}</h3>
-              <p className="mt-1 text-sm text-slate-500">{p.tagline}</p>
-              <div className="mt-5 flex items-end gap-1">
-                <span className="text-4xl font-black tracking-tight">${yearly ? Math.round(p.price * 0.8) : p.price}</span>
-                <span className="pb-1 text-sm text-slate-500">/mo{p.perUser ? ' per user' : ''}</span>
-              </div>
-              <Link
-                href="/signup"
-                className={`mt-6 block rounded-lg px-5 py-3 text-center text-sm font-semibold transition-colors ${p.featured ? 'bg-brand text-white hover:bg-brand-dark' : 'border border-slate-300 text-slate-700 hover:bg-slate-50'}`}
-              >
-                Start free trial
-              </Link>
-              <ul className="mt-6 space-y-2.5">
+              <ul className="mt-5 space-y-2.5">
                 {p.features.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm text-slate-600">
                     <Icon d={check} className="mt-0.5 h-4 w-4 shrink-0 text-brand-dark" /> {f}
@@ -281,10 +281,10 @@ export default function Home() {
         <div className="mx-auto max-w-6xl overflow-hidden rounded-2xl bg-gradient-to-br from-brand to-brand-dark px-6 py-14 text-center sm:px-8 sm:py-16">
           <h2 className="text-3xl font-black tracking-tight text-white sm:text-4xl">Give your evenings back.</h2>
           <p className="mx-auto mt-4 max-w-md text-lg text-green-50">
-            Start free for 14 days. No card and no contracts. Just less admin and more time on the tools.
+            Free while we are in early access. No card, no contracts. Just less admin and more time on the tools.
           </p>
           <Link href="/signup" className="mt-8 inline-block rounded-lg bg-white px-7 py-3.5 text-sm font-bold text-brand-dark shadow-lg transition-transform hover:scale-[1.02]">
-            Start free trial
+            Get early access
           </Link>
         </div>
       </section>
