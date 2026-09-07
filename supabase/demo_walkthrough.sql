@@ -62,13 +62,22 @@ BEGIN
   END IF;
 
   -- ── People ────────────────────────────────────────────────
+  -- The token columns below have no default and GoTrue scans them into plain
+  -- Go strings, which cannot hold NULL. Leaving them out produced rows that
+  -- broke sign in for EVERY account with "Database error querying schema" —
+  -- the query fails before any password is checked. GoTrue's own inserts write
+  -- empty strings, so these must too. See FIX_AUTH_NULL_TOKENS.sql.
   INSERT INTO auth.users (
     id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
-    raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+    raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+    confirmation_token, recovery_token, email_change_token_new,
+    email_change_token_current, phone_change_token, reauthentication_token,
+    email_change, phone_change)
   SELECT c.id, '00000000-0000-0000-0000-000000000000','authenticated','authenticated',
          c.email, crypt(v_pw, gen_salt('bf')), NOW(),
          '{"provider":"email","providers":["email"]}'::jsonb,
-         jsonb_build_object('full_name', c.nm), NOW(), NOW()
+         jsonb_build_object('full_name', c.nm), NOW(), NOW(),
+         '', '', '', '', '', '', '', ''
   FROM (VALUES
     (v_owner,'demo@voltaicelectrical.com.au','Alex Voltaic'),
     (v_dave, 'dave@voltaicelectrical.com.au','Dave Nguyen'),
