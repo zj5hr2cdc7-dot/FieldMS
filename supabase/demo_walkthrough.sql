@@ -87,6 +87,21 @@ BEGIN
   ) AS c(id,email,nm)
   ON CONFLICT (id) DO NOTHING;
 
+  -- GoTrue's password grant joins auth.users to auth.identities. Signing up
+  -- through the app creates this row; inserting a user by hand does not, and
+  -- without it sign in fails with "Database error querying schema" for EVERY
+  -- account. identity_data must carry sub and email — GoTrue reads them back
+  -- out of the jsonb when building the session.
+  INSERT INTO auth.identities (provider_id, user_id, identity_data, provider,
+                               last_sign_in_at, created_at, updated_at)
+  SELECT u.id::text, u.id,
+         jsonb_build_object('sub', u.id::text, 'email', u.email,
+                            'email_verified', true, 'phone_verified', false),
+         'email', NOW(), NOW(), NOW()
+    FROM auth.users u
+   WHERE u.id IN (v_owner, v_dave, v_sam, v_priya, v_josh)
+     AND NOT EXISTS (SELECT 1 FROM auth.identities i WHERE i.user_id = u.id);
+
   -- ── The workspace ─────────────────────────────────────────
   INSERT INTO public.tenants (id, name, slug, abn, phone, website,
                               work_day_start, work_day_end, working_days)
