@@ -25,7 +25,7 @@ export default function Logo({ className = '', size = 'md', textColor = 'text-wh
         style={{ width: h, height: h }}
       >
         <Image
-          src="/fieldms icon.png"
+          src="/fieldms-icon.png"
           alt="FieldMS logo"
           width={h}
           height={h}

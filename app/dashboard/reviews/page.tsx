@@ -158,7 +158,7 @@ export default function ReviewsPage() {
                 level="H"
                 marginSize={2}
                 imageSettings={{
-                  src: '/fieldms icon.png',
+                  src: '/fieldms-icon.png',
                   height: 44,
                   width: 44,
                   excavate: true,
