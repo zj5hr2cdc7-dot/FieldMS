@@ -11,7 +11,9 @@ import AuthShell, { AuthHeading, Eyebrow, Icon, check } from '@/components/AuthS
 import { signInWithEmail, describeAuthError } from '@/lib/auth'
 
 const HIGHLIGHTS: [string, string][] = [
-  ['Quote to invoice in a few taps', 'Build priced quotes with live material costs.'],
+  // "live material costs" implied a live wholesaler feed, which does not
+  // exist — you import your own price lists. Same audit as the homepage.
+  ['Quote to invoice in a few taps', 'Build priced quotes from your own material prices.'],
   ['Your crew, in sync', 'Schedules, timesheets and job updates from the field.'],
 ]
 

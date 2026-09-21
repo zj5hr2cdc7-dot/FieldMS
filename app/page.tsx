@@ -1,16 +1,94 @@
-'use client'
-
 /* ============================================================
    FieldMS marketing page: "Daylight".
    Light-first, product-forward: split hero, bento feature grid,
    numbered how-it-works, energetic brand green.
+
+   ── WHY THIS IS A SERVER COMPONENT ──────────────────────────
+   It used to be 'use client', and it held the entire page behind
+   `if (loading) return <spinner/>` while the browser worked out
+   whether you were signed in. Auth is only resolved client-side,
+   so during the server render `loading` is always true, which
+   meant the HTML served to every crawler was one spinning div.
+   No h1, no copy, no links to /signup — nothing to index and
+   nothing to rank. The two genuinely interactive bits are now
+   client islands (MarketingNav, SignedInRedirect) and the copy
+   ships in the initial HTML.
+
+   Keep it this way. If you need state here, put it in an island
+   rather than adding 'use client' to the top of this file.
    ============================================================ */
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuthContext } from '@/context/AuthContext'
+import type { Metadata } from 'next'
 import Logo from '@/components/Logo'
+import MarketingNav from '@/components/marketing/MarketingNav'
+import SignedInRedirect from '@/components/marketing/SignedInRedirect'
+
+export const metadata: Metadata = {
+  // The homepage is the canonical root. Without this, the apex and www
+  // versions of the site are two URLs serving identical content and Google
+  // has to guess which one to rank.
+  alternates: { canonical: '/' },
+}
+
+/**
+ * Structured data. This is what lets Google show the site as a software
+ * product rather than an anonymous page, and it is the same vocabulary the
+ * AI answer engines read when deciding what FieldMS actually is.
+ *
+ * Every claim below has to stay true — `offers: price 0` is accurate only
+ * while early access is genuinely free. Revisit it when billing goes in.
+ */
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': 'https://fieldms.com.au/#organization',
+      name: 'FieldMS',
+      url: 'https://fieldms.com.au',
+      logo: 'https://fieldms.com.au/fieldms-icon.png',
+      description:
+        'Job management software for Australian electricians — quoting, scheduling, invoicing and compliance in one platform.',
+      areaServed: { '@type': 'Country', name: 'Australia' },
+    },
+    {
+      '@type': 'WebSite',
+      '@id': 'https://fieldms.com.au/#website',
+      url: 'https://fieldms.com.au',
+      name: 'FieldMS',
+      publisher: { '@id': 'https://fieldms.com.au/#organization' },
+      inLanguage: 'en-AU',
+    },
+    {
+      '@type': 'SoftwareApplication',
+      name: 'FieldMS',
+      applicationCategory: 'BusinessApplication',
+      applicationSubCategory: 'Field Service Management',
+      operatingSystem: 'Web, iOS, Android',
+      url: 'https://fieldms.com.au',
+      publisher: { '@id': 'https://fieldms.com.au/#organization' },
+      description:
+        'Field service management for Australian electricians. Build priced quotes on site, schedule your crew, complete test sheets and certificates against the job, and invoice before you leave the driveway.',
+      featureList: [
+        'Quoting and estimates',
+        'Job scheduling and dispatch',
+        'Invoicing and progress claims',
+        'Electrical test sheets and certificates',
+        'Asset and compliance register',
+        'AI fault finding assistant',
+      ],
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'AUD',
+        description: 'Free during early access.',
+      },
+      // No aggregateRating: inventing review scores is both a manual-action
+      // risk with Google and misleading conduct under Australian Consumer Law.
+    },
+  ],
+}
 
 const check = 'M20 6 9 17l-5-5'
 
@@ -23,49 +101,17 @@ function Icon({ d, className = 'h-5 w-5' }: { d: string; className?: string }) {
 }
 
 export default function Home() {
-  const router = useRouter()
-  const { session, loading, userRole } = useAuthContext()
-  const [scrolled, setScrolled] = useState(false)
-
-  useEffect(() => {
-    // ?preview=1 keeps the page visible for signed-in users (design review)
-    if (window.location.search.includes('preview')) return
-    if (!loading && session) router.push(userRole === 'member' ? '/field' : '/dashboard')
-  }, [session, loading, userRole, router])
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
-        <div className="h-10 w-10 animate-spin rounded-full border-2 border-slate-200 border-t-brand" />
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-white text-slate-900 antialiased">
+      <script
+        type="application/ld+json"
+        // The content is a literal defined in this file, not user input.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <SignedInRedirect />
+
       {/* ── NAV: light, bordered, always visible ── */}
-      <nav className={`sticky top-0 z-50 border-b bg-white/90 backdrop-blur-xl transition-shadow ${scrolled ? 'border-slate-200 shadow-sm' : 'border-transparent'}`}>
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Logo size="sm" textColor="text-slate-900" />
-          <div className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
-            <a href="#features" className="transition-colors hover:text-slate-900">Features</a>
-            <a href="#how" className="transition-colors hover:text-slate-900">How it works</a>
-            <a href="#pricing" className="transition-colors hover:text-slate-900">Pricing</a>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link href="/login" className="rounded-lg px-3.5 py-2 text-sm font-semibold text-slate-600 transition-colors hover:text-slate-900">Log in</Link>
-            <Link href="/signup" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark">
-              Get early access
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <MarketingNav />
 
       {/* ── HERO: split layout on light, green energy ── */}
       <header className="relative overflow-hidden">

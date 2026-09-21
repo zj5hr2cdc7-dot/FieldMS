@@ -2,26 +2,53 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import OfflineSync from "@/components/OfflineSync";
+import { SITE_URL } from "@/lib/seo";
 
 export const metadata: Metadata = {
   // The real production domain. This was "https://app.fieldms.com" — a host we
   // do not own — so every relative image path resolved against it and social
   // crawlers fetched nothing. That is why links pasted into Instagram rendered
   // as a bare URL with no preview card.
-  metadataBase: new URL("https://fieldms.com.au"),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "FieldMS — Job management software for Australian electricians",
+    default: "Electrician Job Management Software Australia | FieldMS",
     template: "%s · FieldMS",
   },
+  // Search snippets are truncated around 155–160 characters, so the load-bearing
+  // words go first: what it is, who it is for, where. "The all-in-one platform"
+  // was spending the first twenty characters saying nothing searchable.
   description:
-    "The all-in-one platform for Australian electricians. Quote, schedule, invoice, stay compliant and use AI to save time — built from real feedback from the trade. HVAC and refrigeration support is coming soon.",
+    "Job management software for Australian electricians. Quote on site, schedule your crew, complete test sheets and certificates, and invoice before you leave. Free during early access.",
+  applicationName: "FieldMS",
+  category: "business",
   keywords: [
     "electrician software",
-    "field service management",
-    "electrical job management",
-    "AS/NZS 3000 compliance",
+    "electrician job management software",
+    "electrical contractor software Australia",
+    "field service management software",
+    "electrical test sheet software",
+    "AS/NZS 3000 compliance software",
     "tradie app Australia",
   ],
+  // Explicit, because the default when Google sees no directive is a guess.
+  // The long-snippet and large-preview permissions are what allow a full
+  // description and the og image in a result rather than a clipped line.
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+    },
+  },
+  // Set GOOGLE_SITE_VERIFICATION in Vercel once Search Console gives you the
+  // token; until then the tag is simply omitted rather than rendered empty.
+  verification: process.env.GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+    : undefined,
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -39,7 +66,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_AU",
     siteName: "FieldMS",
-    url: "https://fieldms.com.au",
+    url: SITE_URL,
     // 1200x630 is the size Instagram, Facebook and LinkedIn crop to. Without
     // this tag a shared link renders as a bare URL with no card at all.
     images: [
@@ -76,7 +103,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
+    // en-AU, not en: it tells Google the page is written for an Australian
+    // audience, which is the whole market this product serves.
+    <html lang="en-AU" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
         <AuthProvider>{children}</AuthProvider>
         <OfflineSync />

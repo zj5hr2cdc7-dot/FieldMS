@@ -10,9 +10,13 @@ import Link from 'next/link'
 import AuthShell, { AuthHeading, Eyebrow, Icon, check } from '@/components/AuthShell'
 import { signUpWithEmail, createTenant, describeAuthError } from '@/lib/auth'
 
+// "Accounting sync — connect Xero or MYOB" was here. Neither integration is
+// built; the credentials are not even set. It was removed from the homepage in
+// the claims audit and survived on this page, which is worse, because this is
+// the screen someone reads immediately before signing up. See CLAIMS_AUDIT.md.
 const HIGHLIGHTS: [string, string][] = [
   ['Fast estimate builder', 'Add services, prices and quantities in seconds.'],
-  ['Accounting sync', 'Connect Xero or MYOB to keep your books aligned.'],
+  ['Compliance against the job', 'Test sheets and certificates filed with the work, not in a folder.'],
 ]
 
 const TRUST = ['Free during early access', 'No card required', 'Built in Australia']
