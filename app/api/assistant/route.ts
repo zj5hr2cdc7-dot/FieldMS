@@ -5,6 +5,7 @@ import { readFileSync } from 'fs'
 import { join } from 'path'
 import { createClient } from '@/utils/supabase/server'
 import { canUseFaultFinder } from '@/lib/trades'
+import { validateMessages, checkRateLimit, AI_PROVENANCE_HEADERS } from '@/lib/ai-safety'
 
 /**
  * FieldMS Fault Finder — electrical fault finding assistant.
@@ -40,16 +41,32 @@ function getSystemPrompt(): string {
 
 export async function POST(request: Request) {
   try {
-    const { messages, tenantId } = await request.json()
-    if (!messages || !Array.isArray(messages)) {
-      return Response.json({ error: 'Invalid request' }, { status: 400 })
-    }
+    const { messages: rawMessages, tenantId } = await request.json()
 
     const supabase = await createClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
     if (!user) return Response.json({ error: 'Not authenticated' }, { status: 401 })
+
+    // Rate limit before doing any work: each request prepends a ~185KB system
+    // prompt, so an unbounded endpoint is a way to spend the API budget.
+    const rate = checkRateLimit(user.id)
+    if (!rate.ok) {
+      return Response.json(
+        { error: 'Too many requests. Wait a moment and try again.' },
+        { status: 429, headers: { 'Retry-After': String(rate.retryAfter) } }
+      )
+    }
+
+    // The previous check was `Array.isArray(messages)` and nothing else, so
+    // the caller controlled the entire conversation passed to the model —
+    // including forged assistant turns. See lib/ai-safety.ts.
+    const validated = validateMessages(rawMessages)
+    if (!validated.ok) {
+      return Response.json({ error: validated.error }, { status: 400 })
+    }
+    const messages = validated.messages
 
     // Trade entitlement, enforced here rather than in the UI: the client can
     // ask for anything, but only electrical workspaces are ever served the
@@ -133,6 +150,12 @@ export async function POST(request: Request) {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'X-Content-Type-Options': 'nosniff',
+        // Provenance travels with the response. The body is a plain text
+        // stream, so headers are the only place to put it without changing
+        // the wire format the client already parses.
+        ...AI_PROVENANCE_HEADERS,
+        'X-FieldMS-Model': 'claude-sonnet-5',
+        'X-FieldMS-Generated-At': new Date().toISOString(),
       },
     })
   } catch (err: unknown) {

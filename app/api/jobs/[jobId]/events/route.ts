@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient as createServerClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
+import { requireJobAccess } from '@/lib/authz'
 import { createJobEvent, getLatestJobEvent, getOrCreateTrackingToken } from '@/lib/tracking'
 import { notifyCustomer } from '@/lib/notifications'
 import type { JobEventType, JobStatus } from '@/types/database'
@@ -16,9 +16,13 @@ export async function GET(
   { params }: { params: Promise<{ jobId: string }> }
 ) {
   const { jobId } = await params
-  const supabase = await createServerClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // This used to check only that SOMEBODY was signed in, then read the event
+  // through the service-role client — so any authenticated user of any
+  // workspace could read any job's event history by supplying its id. A
+  // textbook IDOR, and the service role meant RLS could not catch it.
+  const authz = await requireJobAccess(jobId)
+  if (!authz.ok) return NextResponse.json({ error: authz.error }, { status: authz.status })
 
   const event = await getLatestJobEvent(jobId)
   return NextResponse.json({ event })
@@ -30,9 +34,11 @@ export async function POST(
 ) {
   const { jobId } = await params
 
-  const supabase = await createServerClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // Membership of the job's tenant, resolved from the job rather than from
+  // anything the caller sent, and on a revalidated session (getUser) rather
+  // than a locally-decoded cookie (getSession).
+  const authz = await requireJobAccess(jobId)
+  if (!authz.ok) return NextResponse.json({ error: authz.error }, { status: authz.status })
 
   const body = await request.json()
   const eventType = body?.event_type as JobEventType | undefined
@@ -50,16 +56,7 @@ export async function POST(
 
   if (jobError || !job) return NextResponse.json({ error: 'Job not found' }, { status: 404 })
 
-  const { data: membership } = await admin
-    .from('tenant_members')
-    .select('role')
-    .eq('tenant_id', job.tenant_id)
-    .eq('user_id', session.user.id)
-    .single()
-
-  if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-
-  const event = await createJobEvent(jobId, job.tenant_id, session.user.id, eventType)
+  const event = await createJobEvent(jobId, job.tenant_id, authz.userId, eventType)
 
   await admin
     .from('jobs')

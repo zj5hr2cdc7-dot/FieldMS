@@ -1,7 +1,8 @@
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/utils/supabase/admin'
-import { createClient as createServerSupabaseClient } from '@/utils/supabase/server'
+import { requireTenantRole } from '@/lib/authz'
+import { decodeState } from '@/lib/oauth-state'
 
 const PROVIDERS = ['xero', 'myob'] as const
 
@@ -115,14 +116,30 @@ export async function GET(
     return NextResponse.redirect('/dashboard/integrations?error=Missing+OAuth+state+cookie')
   }
 
-  let parsed
-  try {
-    parsed = JSON.parse(Buffer.from(oauthData, 'base64').toString('utf8'))
-  } catch {
+  /*
+   * The state cookie is "<base64url payload>.<hmac>". decodeState verifies the
+   * signature before parsing: this used to be plain base64, which anyone could
+   * edit to name any tenant they liked, and the only thing checked afterwards
+   * was that some user was signed in.
+   */
+  const parsed = decodeState(oauthData)
+  if (!parsed || parsed.state !== state || parsed.provider !== provider) {
     return NextResponse.redirect('/dashboard/integrations?error=Invalid+OAuth+state')
   }
 
-  if (parsed.state !== state || parsed.provider !== provider) {
+  /*
+   * Re-check membership at the point of write. The signature above proves the
+   * cookie is ours and unmodified, but authorisation is re-established from
+   * the live session rather than trusted from a ten-minute-old cookie: the
+   * user may have been removed from the tenant in between.
+   */
+  const authz = await requireTenantRole(parsed.tenantId, ['owner'])
+  if (!authz.ok) {
+    return NextResponse.redirect(
+      `/dashboard/integrations?error=${encodeURIComponent('You are not authorised to connect an integration for this workspace')}`
+    )
+  }
+  if (authz.userId !== parsed.userId) {
     return NextResponse.redirect('/dashboard/integrations?error=Invalid+OAuth+state')
   }
 
@@ -159,15 +176,6 @@ export async function GET(
 
   const accountInfo = await fetchExternalAccountInfo(provider, accessToken)
 
-  const supabase = await createServerSupabaseClient()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  if (!session?.user?.id) {
-    return NextResponse.redirect('/login')
-  }
-
   const admin = createAdminClient()
   const { error: upsertError } = await admin
     .from('integrations')
@@ -181,7 +189,7 @@ export async function GET(
         access_token: accessToken,
         refresh_token: refreshToken ?? null,
         expires_at: expiresAt,
-        created_by: session.user.id,
+        created_by: authz.userId,
       },
       { onConflict: 'tenant_id,provider' }
     )

@@ -9,13 +9,17 @@
     "lint": "eslint",
     "check:fault-finder": "node scripts/check-fault-finder.mjs",
     "build:verify": "node scripts/build-verify-sql.mjs",
-    "doctor": "node scripts/doctor.mjs"
+    "doctor": "node scripts/doctor.mjs",
+    "audit:rls": "node scripts/audit-rls.mjs",
+    "audit:licences": "node scripts/audit-licences.mjs",
+    "test:security": "node scripts/security-tests.mjs",
+    "audit:all": "npm run audit:rls && npm run audit:licences && npm run test:security && npm audit --omit=dev"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.105.0",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.103.0",
-    "next": "16.2.3",
+    "next": "^16.3.5",
     "qrcode.react": "^4.2.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
