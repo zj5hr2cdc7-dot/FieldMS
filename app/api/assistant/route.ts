@@ -41,7 +41,18 @@ function getSystemPrompt(): string {
 
 export async function POST(request: Request) {
   try {
-    const { messages: rawMessages, tenantId } = await request.json()
+    // A malformed or empty body used to throw here, fall through to the outer
+    // catch, and come back as 500 "Fault Finder unavailable" — which points
+    // the user (and anyone reading logs) at a server fault when the request
+    // was simply bad. Found by probing the deployed endpoint with an empty
+    // POST. Client error, so: 400.
+    let body: { messages?: unknown; tenantId?: unknown }
+    try {
+      body = await request.json()
+    } catch {
+      return Response.json({ error: 'Request body must be valid JSON' }, { status: 400 })
+    }
+    const { messages: rawMessages, tenantId } = body
 
     const supabase = await createClient()
     const {
