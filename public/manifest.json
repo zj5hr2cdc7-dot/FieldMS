@@ -1,18 +1,32 @@
 {
+  "id": "/dashboard",
   "name": "FieldMS",
   "short_name": "FieldMS",
   "description": "Field service management for electrical contractors",
   "start_url": "/dashboard",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#1a2332",
+  "background_color": "#ffffff",
   "theme_color": "#1a2332",
   "icons": [
     {
-      "src": "/fieldms-icon.png",
-      "sizes": "any",
+      "src": "/icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

@@ -44,7 +44,9 @@ export default function FieldLayout({ children }: { children: React.ReactNode })
   return (
     <div className="min-h-screen bg-slate-100">
       {/* Slim top bar */}
-      <header className="sticky top-0 z-30 bg-ink text-white">
+      {/* pt-safe: in standalone mode this bar sits under the Dynamic Island
+          without it. See the .pt-safe comment in globals.css. */}
+      <header className="sticky top-0 z-30 bg-ink text-white pt-safe">
         <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3">
           <div>
             <p className="text-xs uppercase tracking-widest text-white/50">{currentTenant?.name ?? 'FieldMS'}</p>

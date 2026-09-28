@@ -91,6 +91,27 @@ select {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/*
+ * Top safe area — for the sticky nav bars.
+ *
+ * The web app manifest sets display:standalone and the layout sets
+ * statusBarStyle:'black-translucent' with viewportFit:'cover'. Together those
+ * mean the page is drawn edge to edge, UNDERNEATH the status bar and the
+ * Dynamic Island, once the app is launched from the iPhone home screen. Every
+ * safe-area rule in this project handled the bottom (the home indicator) and
+ * nothing handled the top, so the nav bar sat behind the clock.
+ *
+ * Applied to the two top bars rather than to <body>, because both are bg-ink:
+ * padding them extends that dark colour up behind the status bar, which is
+ * what makes the white status-bar text of 'black-translucent' readable. Putting
+ * it on a light-coloured ancestor instead would give white text on white.
+ *
+ * No effect in a normal browser tab — env() resolves to 0 there.
+ */
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 /* ================================================================
    Reusable components — prefer these over ad-hoc utility strings
    ================================================================ */

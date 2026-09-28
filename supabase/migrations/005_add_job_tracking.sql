@@ -90,3 +90,4 @@ CREATE POLICY "Tenant members can view job events"
     tenant_id IN (SELECT tenant_id FROM public.tenant_members WHERE user_id = auth.uid())
   );
 
+
