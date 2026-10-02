@@ -105,9 +105,22 @@ export async function POST(request: Request) {
 
     const client = getClient()
     if (!client) {
+      // This used to tell EVERY user, in production, to "add ANTHROPIC_API_KEY
+      // to .env.local and restart the server" — a developer instruction shown
+      // to an electrician standing in a switchboard, and a small disclosure of
+      // how the server is configured. The operator detail now goes to the
+      // server log; the user gets something true and actionable for them.
+      console.error(
+        'Fault Finder unavailable: ANTHROPIC_API_KEY is not set in this environment.'
+      )
       return Response.json(
-        { error: 'Fault Finder is not configured: add ANTHROPIC_API_KEY to .env.local and restart the server.' },
-        { status: 500 }
+        {
+          error:
+            process.env.NODE_ENV === 'development'
+              ? 'Fault Finder is not configured: add ANTHROPIC_API_KEY to .env.local and restart the dev server.'
+              : 'Fault Finder is temporarily unavailable. Please try again later.',
+        },
+        { status: 503 }
       )
     }
 
