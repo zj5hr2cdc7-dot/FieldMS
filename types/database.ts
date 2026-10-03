@@ -347,3 +347,44 @@ export interface AuthSession {
   tenant: Tenant | null
   role: UserRole | null
 }
+
+// ── Job packages ───────────────────────────────────────────────────────────
+// Reusable labour + material bundles. Applying one writes job_billing_items.
+// See supabase/migrations/028_job_packages.sql.
+
+export type PackageItemKind = 'labour' | 'material'
+
+export interface JobPackage {
+  id: string
+  tenant_id: string
+  name: string
+  description: string | null
+  active: boolean
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface JobPackageItem {
+  id: string
+  package_id: string
+  tenant_id: string
+  kind: PackageItemKind
+  description: string
+  /** Labour only. */
+  hours: number | null
+  /** Labour only. NULL means use the rate supplied at apply time. */
+  rate_per_hour: number | null
+  /** Material only. NULL means the line carries a pinned unit_cost_override. */
+  master_product_id: string | null
+  /** Material only. */
+  quantity: number | null
+  /** Material only. NULL means resolve the live price when applied. */
+  unit_cost_override: number | null
+  sort_order: number
+  created_at: string
+}
+
+export interface JobPackageWithItems extends JobPackage {
+  items: JobPackageItem[]
+}

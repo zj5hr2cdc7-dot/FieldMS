@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuthContext } from '@/context/AuthContext'
 import { billingCapabilities, type BillingCapabilities } from '@/lib/permissions'
+import ApplyPackage from '@/components/ApplyPackage'
 import { getJob } from '@/lib/jobs'
 import { recordPayment } from '@/lib/payments'
 import { syncJobToAccounting } from '@/lib/payments'
@@ -117,6 +118,17 @@ export default function JobBillingPage({ params }: { params: Promise<{ id: strin
           <Link href={`/dashboard/forms?job=${job.id}`} className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">Forms</Link>
         </div>
       </div>
+
+      {/* Packages: the whole point is not re-typing the same five lines on
+          every small job. Gated on editPrices because applying one decides
+          what the customer is charged; /api/packages/apply checks again. */}
+      {caps.editPrices && currentTenant && (
+        <ApplyPackage
+          tenantId={currentTenant.id}
+          jobId={job.id}
+          onApplied={async (msg) => { flash(msg); await refresh() }}
+        />
+      )}
 
       {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
       {success && <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700">{success}</div>}

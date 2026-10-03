@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useAuthContext } from '@/context/AuthContext'
 import { CONNECTORS } from '@/lib/pricing/connectors'
 import {
@@ -187,6 +188,9 @@ export default function MaterialsPage() {
           <p className="text-slate-500 mt-1">Always-current material prices — market data plus your own trade accounts. No more manual price books.</p>
         </div>
         <div className="flex gap-2">
+          <Link href="/dashboard/materials/packages" className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            Job packages
+          </Link>
           <button type="button" onClick={() => setShowSettings((v) => !v)} className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
             Pricing settings
           </button>
