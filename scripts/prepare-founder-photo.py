@@ -46,6 +46,22 @@ def main() -> None:
         default=0.35,
         help="vertical centre of the crop, 0 = top, 1 = bottom (default 0.35)",
     )
+    parser.add_argument(
+        "--face-x",
+        type=float,
+        default=0.5,
+        help="horizontal centre of the crop, 0 = left, 1 = right (default 0.5)",
+    )
+    parser.add_argument(
+        "--scale",
+        type=float,
+        default=1.0,
+        help=(
+            "crop size as a fraction of the image's shorter side. 1.0 takes the "
+            "biggest square that fits, which on a full-length shot leaves the face "
+            "tiny in a sea of background. 0.45 or so gives head and shoulders."
+        ),
+    )
     args = parser.parse_args()
 
     if not args.source.exists():
@@ -56,12 +72,17 @@ def main() -> None:
     img = ImageOps.exif_transpose(Image.open(args.source)).convert("RGB")
     w, h = img.size
 
-    side = min(w, h)
+    # The biggest square that fits is almost never the right crop. A standing
+    # phone photo is mostly background, so taking the full width leaves a
+    # thumbnail-sized face. --scale shrinks the box; --face-x/--face-y place it.
+    side = int(min(w, h) * args.scale)
+    side = max(64, min(side, min(w, h)))
 
-    # Horizontally centred; vertically placed by --face-y, then clamped so the
-    # crop box stays inside the image.
-    left = (w - side) // 2
+    left = int(w * args.face_x - side / 2)
     top = int(h * args.face_y - side / 2)
+
+    # Clamp so the box stays inside the image.
+    left = max(0, min(left, w - side))
     top = max(0, min(top, h - side))
 
     square = img.crop((left, top, left + side, top + side))
