@@ -304,19 +304,20 @@ export default function Home() {
               Built by a sparky, not a software company.
             </h2>
             <div className="mt-5 space-y-4 text-lg leading-8 text-slate-300">
+              <p>I&apos;m Jack. I&apos;m a licensed electrician.</p>
               <p>
-                I&apos;m Jack. I&apos;m a licensed electrician, and I built FieldMS because every
-                bit of software I tried felt like it was designed by someone who had never opened a
-                switchboard.
+                From the time I got into the trade, the same thing kept coming up through the
+                network — business owners running a different program for every part of the job, and
+                not one that did the lot.
               </p>
               <p>
-                So I built the one I wanted on the tools: quote on site, test sheet attached to the
-                job rather than lost in a folder, invoice out before I&apos;ve left the driveway.
+                So that became the goal: make the day-to-day easier for electrical business owners.
+                Fewer hoops between the start of a job and the end of the day, so you can get on with
+                keeping food on the table.
               </p>
               <p>
-                It&apos;s early, and I would much rather hear what&apos;s wrong with it than guess.
-                If something doesn&apos;t work the way you&apos;d expect it to, email me — it comes
-                straight to me, not a support queue.
+                It&apos;s early, and I would rather hear what&apos;s wrong with it than guess. Email
+                me — it comes straight to me, not a support queue.
               </p>
             </div>
             <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
