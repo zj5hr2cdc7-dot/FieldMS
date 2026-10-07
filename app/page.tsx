@@ -19,6 +19,7 @@
    ============================================================ */
 
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 import Logo from '@/components/Logo'
 import MarketingNav from '@/components/marketing/MarketingNav'
@@ -274,14 +275,60 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── QUOTE BAND ── */}
-      <section className="bg-ink py-16 sm:py-20">
-        <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
-          <p className="text-2xl font-bold leading-relaxed text-white sm:text-3xl">
-            “We didn&apos;t start with features. We started by asking tradies what they{' '}
-            <span className="text-brand-light">hated</span> about the software they already used.”
-          </p>
-          <p className="mt-5 text-sm font-semibold uppercase tracking-widest text-slate-400">The FieldMS team</p>
+      {/* ── FOUNDER ──
+          Replaces an anonymous "The FieldMS team" quote. A face and a name is
+          the thing that separates this from the flood of AI-generated trade
+          apps, and "licensed electrician" is the only credential this audience
+          actually cares about — so it leads.
+
+          Everything stated here must stay true. No years of experience, no
+          licence numbers, no customer counts unless they can be shown. */}
+      <section id="about" className="scroll-mt-20 bg-ink py-16 sm:py-20">
+        <div className="mx-auto grid max-w-5xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-[auto_1fr] lg:gap-14">
+          <div className="mx-auto lg:mx-0">
+            <Image
+              src="/founder-jack.jpg"
+              alt="Jack Gapes, founder of FieldMS"
+              width={224}
+              height={224}
+              priority={false}
+              className="h-44 w-44 rounded-2xl object-cover shadow-2xl ring-1 ring-white/10 sm:h-56 sm:w-56"
+            />
+          </div>
+
+          <div>
+            <p className="text-sm font-bold uppercase tracking-widest text-brand-light">
+              Who&apos;s behind it
+            </p>
+            <h2 className="mt-3 text-2xl font-black tracking-tight text-white sm:text-3xl">
+              Built by a sparky, not a software company.
+            </h2>
+            <div className="mt-5 space-y-4 text-lg leading-8 text-slate-300">
+              <p>
+                I&apos;m Jack. I&apos;m a licensed electrician, and I built FieldMS because every
+                bit of software I tried felt like it was designed by someone who had never opened a
+                switchboard.
+              </p>
+              <p>
+                So I built the one I wanted on the tools: quote on site, test sheet attached to the
+                job rather than lost in a folder, invoice out before I&apos;ve left the driveway.
+              </p>
+              <p>
+                It&apos;s early, and I would much rather hear what&apos;s wrong with it than guess.
+                If something doesn&apos;t work the way you&apos;d expect it to, email me — it comes
+                straight to me, not a support queue.
+              </p>
+            </div>
+            <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
+              <p className="font-bold text-white">Jack Gapes</p>
+              <a
+                href="mailto:jack.gapes@outlook.com"
+                className="text-brand-light underline decoration-brand-light/40 underline-offset-4 transition-colors hover:text-white hover:decoration-white/60"
+              >
+                jack.gapes@outlook.com
+              </a>
+            </div>
+          </div>
         </div>
       </section>
 

@@ -35,6 +35,7 @@ export default function MarketingNav() {
           <a href="#features" className="transition-colors hover:text-slate-900">Features</a>
           <a href="#how" className="transition-colors hover:text-slate-900">How it works</a>
           <a href="#pricing" className="transition-colors hover:text-slate-900">Pricing</a>
+          <a href="#about" className="transition-colors hover:text-slate-900">About</a>
         </div>
         <div className="flex items-center gap-2">
           <Link href="/login" className="rounded-lg px-3.5 py-2 text-sm font-semibold text-slate-600 transition-colors hover:text-slate-900">Log in</Link>
