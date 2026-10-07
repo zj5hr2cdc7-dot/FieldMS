@@ -153,7 +153,17 @@ export default function Home() {
           <div aria-hidden="true" className="relative">
             <div className="card overflow-hidden shadow-xl">
               <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-5 py-3">
-                <p className="text-sm font-bold">Today</p>
+                <div className="flex items-center gap-2.5">
+                  <p className="text-sm font-bold">Today</p>
+                  {/* Says whose screen this is. The revenue and margin figures
+                      below are owner-only in the product — a technician never
+                      sees them — so labelling the mockup stops it reading as
+                      "everyone on the team can see the books". */}
+                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-200/70 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600">
+                    <Icon d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8" className="h-3 w-3" />
+                    Owner&apos;s view
+                  </span>
+                </div>
                 <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-bold text-brand-dark">6 jobs</span>
               </div>
               <div className="grid grid-cols-3 gap-3 px-5 pt-4">
@@ -246,7 +256,7 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="max-w-2xl">
             <p className="text-sm font-bold uppercase tracking-widest text-brand-dark">How it works</p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Up and running before smoko.</h2>
+            <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Simple setup, start to finish.</h2>
           </div>
           <div className="mt-12 grid gap-6 md:grid-cols-3">
             {[
