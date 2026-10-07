@@ -67,7 +67,7 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   openGraph: {
-    title: "FieldMS — Job management software for Australian electricians",
+    title: "FieldMS | Job management software for Australian electricians",
     description:
       "Quote, schedule, invoice and stay compliant in one AI-powered platform, built with Australian electricians.",
     type: "website",
@@ -81,13 +81,13 @@ export const metadata: Metadata = {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "FieldMS — every switchboard you've tested, and the date the next one's due.",
+        alt: "FieldMS. Every switchboard you've tested, and the date the next one's due.",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "FieldMS — Job management software for Australian electricians",
+    title: "FieldMS | Job management software for Australian electricians",
     description:
       "The all-in-one platform for Australian electricians. Built from real feedback from the trade.",
     // summary_large_image without an image is an empty card, so this is not

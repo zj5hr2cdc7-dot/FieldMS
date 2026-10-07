@@ -9,7 +9,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Create your account',
   description:
-    'Start using FieldMS free during early access. Set up your electrical business in minutes — quoting, scheduling, test sheets and invoicing in one place.',
+    'Start using FieldMS free during early access. Set up your electrical business in minutes, with quoting, scheduling, test sheets and invoicing in one place.',
   alternates: { canonical: '/signup' },
 }
 

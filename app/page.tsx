@@ -50,7 +50,7 @@ const structuredData = {
       url: 'https://fieldms.com.au',
       logo: 'https://fieldms.com.au/fieldms-icon.png',
       description:
-        'Job management software for Australian electricians — quoting, scheduling, invoicing and compliance in one platform.',
+        'Job management software for Australian electricians. Quoting, scheduling, invoicing and compliance in one platform.',
       areaServed: { '@type': 'Country', name: 'Australia' },
     },
     {
@@ -304,11 +304,14 @@ export default function Home() {
               Built by a sparky, not a software company.
             </h2>
             <div className="mt-5 space-y-4 text-lg leading-8 text-slate-300">
-              <p>I&apos;m Jack. I&apos;m a licensed electrician.</p>
               <p>
-                From the time I got into the trade, the same thing kept coming up through the
-                network — business owners running a different program for every part of the job, and
-                not one that did the lot.
+                I&apos;m Jack. I&apos;m a licensed electrician, seven years in the trade and going
+                on eight.
+              </p>
+              <p>
+                In that time the same thing kept coming up through the network. Business owners
+                running a different program for every part of the job, and not one that did the
+                lot.
               </p>
               <p>
                 So that became the goal: make the day-to-day easier for electrical business owners.
@@ -317,7 +320,7 @@ export default function Home() {
               </p>
               <p>
                 It&apos;s early, and I would rather hear what&apos;s wrong with it than guess. Email
-                me — it comes straight to me, not a support queue.
+                me. It comes straight to me, not a support queue.
               </p>
             </div>
             <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
