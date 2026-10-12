@@ -20,7 +20,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthContext } from '@/context/AuthContext'
-import { updateTenant, addTenantMember } from '@/lib/auth'
+import { updateTenant } from '@/lib/auth'
+import { inviteTeamMember } from '@/lib/team'
 import {
   TRADES,
   STEP_ORDER,
@@ -668,6 +669,7 @@ export default function OnboardingWizard() {
                 Invited: {invited.join(', ')}
               </p>
             )}
+
           </div>
           <WizardNav
             saving={saving}
@@ -677,15 +679,25 @@ export default function OnboardingWizard() {
             onNext={() => advance('team', async () => {
               const emails = invites.split('\n').map((e) => e.trim()).filter((e) => /.+@.+\..+/.test(e))
               const ok: string[] = []
+              const failed: string[] = []
               for (const email of emails) {
                 try {
-                  await addTenantMember(tenantId, email, 'member')
+                  await inviteTeamMember(tenantId, email, 'technician')
                   ok.push(email)
                 } catch {
-                  // Unregistered emails can be invited again from Team later
+                  failed.push(email)
                 }
               }
-              setInvited(ok)
+              setInvited((prev) => [...prev, ...ok])
+              if (failed.length) {
+                // Used to be swallowed, so the owner moved on believing their
+                // crew had been invited. Stay on this step, leave only the
+                // failed addresses in the box, and say so.
+                setInvites(failed.join('\n'))
+                throw new Error(
+                  `Could not invite ${failed.join(', ')}. Check the address and try again, or skip and invite them later from Settings, then Team.`
+                )
+              }
             })}
           />
         </div>

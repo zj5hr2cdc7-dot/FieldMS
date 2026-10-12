@@ -20,7 +20,7 @@ export async function uploadJobPlan(
 ): Promise<JobPlan> {
   const supabase = createClient()
   const ext = file.name.split('.').pop() ?? 'bin'
-  const safeName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+  const safeName = `${Date.now()}_${crypto.randomUUID()}.${ext}`
   const path = `${tenantId}/${safeName}`
 
   const { error: storageError } = await supabase.storage
