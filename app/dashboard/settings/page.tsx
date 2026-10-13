@@ -51,6 +51,7 @@ const GROUPS: { title: string; blurb: string; items: Item[] }[] = [
     title: 'Money and materials',
     blurb: 'Pricing, suppliers and where your books live.',
     items: [
+      { label: 'Plan & payments', description: 'Your FieldMS plan, and taking card or bank payments on invoices', href: '/dashboard/plan', requires: 'owner' },
       { label: 'Integrations', description: 'Xero and MYOB connections', href: '/dashboard/integrations', requires: 'owner' },
       { label: 'Materials', description: 'Catalogue, wholesaler accounts and price overrides', href: '/dashboard/materials', requires: 'office' },
     ],

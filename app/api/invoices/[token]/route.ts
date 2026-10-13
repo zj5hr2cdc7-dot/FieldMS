@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/utils/supabase/admin'
+import { getStripe } from '@/lib/stripe'
 
 async function getInvoiceByToken(token: string) {
   const admin = createAdminClient()
@@ -21,11 +22,21 @@ export async function GET(
   const invoice = await getInvoiceByToken(token)
   if (!invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
 
-  const [{ data: job }, { data: tenant }, { data: branding }] = await Promise.all([
+  const [{ data: job }, { data: tenant }, { data: branding }, { data: paymentAccount }] = await Promise.all([
     admin.from('jobs').select('title, customer_name, customer_address, po_number').eq('id', invoice.job_id).single(),
     admin.from('tenants').select('name, abn, phone, website').eq('id', invoice.tenant_id).single(),
     admin.from('tenant_branding').select('trading_name, electrical_license, business_address, primary_color, secondary_color, accent_color, font_family, logo_path, footer_text, acn').eq('tenant_id', invoice.tenant_id).single(),
+    admin.from('tenant_payment_accounts').select('charges_enabled').eq('tenant_id', invoice.tenant_id).maybeSingle(),
   ])
+
+  // Offer "Pay now" only when the contractor has finished Stripe onboarding
+  // and something is still owing. The pay route re-checks all of this.
+  const balanceOwing = Number(invoice.total_inc_gst) - Number(invoice.amount_paid)
+  const canPayOnline =
+    Boolean(getStripe()) &&
+    Boolean(paymentAccount?.charges_enabled) &&
+    !['paid', 'void', 'draft'].includes(invoice.status) &&
+    balanceOwing >= 0.5
 
   let logoUrl: string | null = null
   if (branding?.logo_path) {
@@ -68,6 +79,7 @@ export async function GET(
     business: tenant ?? null,
     branding: branding ?? null,
     logo_url: logoUrl,
+    can_pay_online: canPayOnline,
   })
 }
 

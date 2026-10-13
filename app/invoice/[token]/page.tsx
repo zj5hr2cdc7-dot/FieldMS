@@ -25,6 +25,7 @@ interface InvoiceData {
     footer_text: string | null; acn: string | null
   } | null
   logo_url: string | null
+  can_pay_online?: boolean
 }
 
 const money = (n: number) => `A$${n.toFixed(2)}`
@@ -36,6 +37,14 @@ export default function PublicInvoicePage({ params }: { params: Promise<{ token:
   const [name, setName] = useState('')
   const [approved, setApproved] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [paying, setPaying] = useState(false)
+  const [justPaid, setJustPaid] = useState(false)
+
+  useEffect(() => {
+    // Back from Stripe Checkout. The webhook usually lands within seconds,
+    // so say thanks now rather than showing a balance that is about to clear.
+    if (new URLSearchParams(window.location.search).get('paid') === '1') setJustPaid(true)
+  }, [])
 
   useEffect(() => {
     fetch(`/api/invoices/${token}`)
@@ -138,6 +147,33 @@ export default function PublicInvoicePage({ params }: { params: Promise<{ token:
             {isPaid ? (
               <div className="rounded-lg border border-green-200 bg-green-50 p-5 text-center text-sm font-semibold text-green-800">
                 ✓ This invoice has been paid in full. Thank you.
+              </div>
+            ) : justPaid ? (
+              <div className="rounded-lg border border-green-200 bg-green-50 p-5 text-center text-sm font-semibold text-green-800">
+                ✓ Thanks, your payment has been received. Bank payments can take a few days to clear.
+              </div>
+            ) : data.can_pay_online ? (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+                <p className="text-sm font-semibold text-slate-800">Pay {money(balance)} online</p>
+                <p className="mt-1 text-xs text-slate-500">Secure payment processed by Stripe. {businessName} never sees your card details.</p>
+                <button
+                  type="button"
+                  disabled={paying}
+                  onClick={async () => {
+                    setPaying(true); setError(null)
+                    try {
+                      const res = await fetch(`/api/invoices/${token}/pay`, { method: 'POST' })
+                      const body = await res.json().catch(() => ({}))
+                      if (!res.ok || !body.url) throw new Error(body.error || 'Could not start payment')
+                      window.location.href = body.url
+                    } catch (err) { setError(err instanceof Error ? err.message : 'Could not start payment'); setPaying(false) }
+                  }}
+                  className="mt-3 w-full rounded-lg px-5 py-3 text-base font-semibold text-white disabled:opacity-50 sm:w-auto"
+                  style={{ backgroundColor: brand.primary }}
+                >
+                  {paying ? 'Opening secure payment…' : 'Pay now'}
+                </button>
+                {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
               </div>
             ) : approved ? (
               <div className="rounded-lg border border-green-200 bg-green-50 p-5 text-center text-sm font-semibold text-green-800">
