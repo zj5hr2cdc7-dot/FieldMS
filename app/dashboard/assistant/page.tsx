@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useAuthContext } from '@/context/AuthContext'
 import { canUseFaultFinder, getTradesCached } from '@/lib/onboarding'
+import { FAULT_FINDER_ENABLED } from '@/lib/features'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -24,7 +25,21 @@ const WELCOME =
 const FOOTER =
   'Always verify advice against current AS/NZS standards and your state’s electrical safety regulations.'
 
+// Switched off site-wide for now: see lib/features.ts.
 export default function FaultFinderPage() {
+  return FAULT_FINDER_ENABLED ? <FaultFinderChat /> : <FaultFinderOff />
+}
+
+function FaultFinderOff() {
+  return (
+    <div className="mx-auto max-w-xl px-4 py-16 text-center">
+      <h1 className="text-xl font-bold text-slate-900">Fault Finder is not available</h1>
+      <p className="mt-2 text-sm text-slate-500">This feature is switched off for now.</p>
+    </div>
+  )
+}
+
+function FaultFinderChat() {
   const { currentTenant } = useAuthContext()
   const [allowed, setAllowed] = useState<boolean | null>(null)
   const [messages, setMessages] = useState<Message[]>([])

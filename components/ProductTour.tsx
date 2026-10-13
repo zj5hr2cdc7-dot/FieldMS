@@ -12,6 +12,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuthContext } from '@/context/AuthContext'
 import { canUseFaultFinder, getTradesCached, saveOnboarding } from '@/lib/onboarding'
+import { FAULT_FINDER_ENABLED } from '@/lib/features'
 
 interface TourStep {
   target?: string
@@ -75,7 +76,7 @@ export default function ProductTour() {
 
   const start = useCallback(async () => {
     const trades = currentTenant ? await getTradesCached(currentTenant.id) : []
-    setSteps(buildSteps(canUseFaultFinder(trades)))
+    setSteps(buildSteps(FAULT_FINDER_ENABLED && canUseFaultFinder(trades)))
     setIndex(0)
   }, [currentTenant])
 

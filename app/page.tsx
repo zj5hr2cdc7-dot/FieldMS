@@ -77,7 +77,7 @@ const structuredData = {
         'Invoicing and progress claims',
         'Electrical test sheets and certificates',
         'Asset and compliance register',
-        'AI fault finding assistant',
+        'Photo site reports',
       ],
       offers: {
         '@type': 'Offer',
@@ -132,7 +132,7 @@ export default function Home() {
               growing your business.
             </h1>
             <p className="mt-6 max-w-lg text-lg leading-8 text-slate-600">
-              Quoting, scheduling, invoicing, compliance and an AI offsider. One platform, shaped by
+              Quoting, scheduling, invoicing and compliance. One platform, shaped by
               what tradies told us other software got wrong.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -239,7 +239,7 @@ export default function Home() {
           {[
             ['M8 7V3m8 4V3M3 11h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z', 'Scheduling', 'Plan your crew’s week in seconds. Everyone sees their jobs on their phone.', 'bg-sky-50 text-sky-600'],
             ['M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.6a1 1 0 0 1 .7.3l5.4 5.4a1 1 0 0 1 .3.7V19a2 2 0 0 1-2 2z', 'Compliance built in', 'Test sheets and certificates signed on site and sent before you leave.', 'bg-amber-50 text-amber-600'],
-            ['M12 8V4H8m8 0h-4v4m-4 4v4h4m4 0h-4v-4M4 20h16', 'Fault Finder', 'An AI offsider for electricians, trained on the fault finding process and the rules you work to.', 'bg-green-50 text-brand-dark'],
+            ['M3 9a2 2 0 0 1 2-2h.93a2 2 0 0 0 1.664-.89l.812-1.22A2 2 0 0 1 10.07 4h3.86a2 2 0 0 1 1.664.89l.812 1.22A2 2 0 0 0 18.07 7H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9zM15 13a3 3 0 1 1-6 0 3 3 0 0 1 6 0z', 'Site reports', 'Photos and notes against the job, sent to your customer as a link they can open on any phone.', 'bg-green-50 text-brand-dark'],
             ['M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6', 'Your material prices', 'Import your wholesaler price lists and see every price change over time.', 'bg-violet-50 text-violet-600'],
             ['M5 12.55a11 11 0 0 1 14 0M8.5 16a6 6 0 0 1 7 0M12 20h.01', 'Built for switchrooms', 'No signal? Mark jobs done anyway. It syncs the moment you are back in range.', 'bg-slate-100 text-slate-600'],
           ].map(([d, title, body, tint]) => (
@@ -367,7 +367,7 @@ export default function Home() {
           {[
             { name: 'Quote to invoice', features: ['Priced quotes on site', 'Customer approves with one tap', 'Jobs, then invoices'] },
             { name: 'Compliance', features: ['Test sheets against the job', 'Certificates you can hand over', 'Asset & compliance register'] },
-            { name: 'Your crew', features: ['Scheduling and timesheets', 'Field app for technicians', 'FieldMS Fault Finder'] },
+            { name: 'Your crew', features: ['Scheduling and timesheets', 'Field app for technicians', 'Site reports with photos'] },
           ].map((p) => (
             <div key={p.name} className="rounded-xl border border-slate-200 bg-white p-7 shadow-sm transition-shadow hover:shadow-lg">
               <h3 className="text-lg font-bold">{p.name}</h3>

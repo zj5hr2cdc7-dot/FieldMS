@@ -8,6 +8,7 @@ import { getJob, updateJob } from '@/lib/jobs'
 import { updateJobStatusOfflineAware } from '@/lib/offline-queue'
 import { startEntry, endEntry, getOpenEntries, type TimeEntry } from '@/lib/time-tracking'
 import type { Job, JobStatus } from '@/types/database'
+import { FAULT_FINDER_ENABLED } from '@/lib/features'
 
 const STATUS_STEP: Partial<Record<JobStatus, { next: JobStatus; label: string }>> = {
   open: { next: 'in_progress', label: 'Start job' },
@@ -151,9 +152,11 @@ export default function FieldJobDetail({ params }: { params: Promise<{ id: strin
         <Link href={`/field/photos?job=${job.id}`} className="rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm active:bg-slate-50">
           <p className="text-2xl">📷</p><p className="mt-1 text-sm font-semibold text-slate-700">Photos</p>
         </Link>
-        <Link href={`/field/assistant?job=${job.id}`} className="rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm active:bg-slate-50">
-          <p className="text-2xl">⚡</p><p className="mt-1 text-sm font-semibold text-slate-700">Fault Finder</p>
-        </Link>
+        {FAULT_FINDER_ENABLED && (
+          <Link href={`/field/assistant?job=${job.id}`} className="rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm active:bg-slate-50">
+            <p className="text-2xl">⚡</p><p className="mt-1 text-sm font-semibold text-slate-700">Fault Finder</p>
+          </Link>
+        )}
         <a href="/field/messages" className="rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm active:bg-slate-50">
           <p className="text-2xl">💬</p><p className="mt-1 text-sm font-semibold text-slate-700">Message office</p>
         </a>

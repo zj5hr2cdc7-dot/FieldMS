@@ -6,6 +6,7 @@ import { join } from 'path'
 import { createClient } from '@/utils/supabase/server'
 import { canUseFaultFinder } from '@/lib/trades'
 import { validateMessages, checkRateLimit, AI_PROVENANCE_HEADERS } from '@/lib/ai-safety'
+import { FAULT_FINDER_ENABLED } from '@/lib/features'
 
 /**
  * FieldMS Fault Finder — electrical fault finding assistant.
@@ -41,6 +42,11 @@ function getSystemPrompt(): string {
 }
 
 export async function POST(request: Request) {
+  // Switched off site-wide for now: see lib/features.ts. Nothing reaches the
+  // model while this is off.
+  if (!FAULT_FINDER_ENABLED) {
+    return Response.json({ error: 'Not found' }, { status: 404 })
+  }
   try {
     // A malformed or empty body used to throw here, fall through to the outer
     // catch, and come back as 500 "Fault Finder unavailable" — which points
