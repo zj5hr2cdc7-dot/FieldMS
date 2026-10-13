@@ -324,3 +324,56 @@ export function summarise(items: JobPackageItem[]): { labourHours: number; mater
     materialLines: items.filter((i) => i.kind === 'material').length,
   }
 }
+
+// ── Starter packages ───────────────────────────────────────────────────────
+
+/**
+ * Common electrical jobs to start from, so a new workspace is not looking at
+ * an empty page. Labour only, with no rate: each line prices at the
+ * workspace's own labour rate, and the hours are starting points for the
+ * owner to change. Materials are left for the owner to add from their own
+ * price list, because material prices are theirs, not ours.
+ */
+export const STARTER_PACKAGES: { name: string; description: string; lines: PackageLineInput[] }[] = [
+  {
+    name: 'Switchboard upgrade (single phase)',
+    description: 'Starter package: adjust hours and add your board, RCBOs and sundries.',
+    lines: [
+      { kind: 'labour', description: 'Isolate, remove existing board, install and terminate new switchboard', hours: 6 },
+      { kind: 'labour', description: 'Testing, labelling and compliance certificate', hours: 1 },
+    ],
+  },
+  {
+    name: 'Downlights (per 6)',
+    description: 'Starter package: adjust hours and add your fittings and cable.',
+    lines: [{ kind: 'labour', description: 'Cut in, wire and fit 6 LED downlights on existing circuit', hours: 3 }],
+  },
+  {
+    name: 'EV charger install',
+    description: 'Starter package: adjust hours for cable run and add the charger, cable and protection.',
+    lines: [
+      { kind: 'labour', description: 'Install EV charger, dedicated circuit and protection', hours: 4 },
+      { kind: 'labour', description: 'Testing, commissioning and compliance certificate', hours: 1 },
+    ],
+  },
+  {
+    name: 'Smoke alarm upgrade (whole home)',
+    description: 'Starter package: adjust for the number of alarms and add the alarms.',
+    lines: [{ kind: 'labour', description: 'Supply and install interconnected photoelectric smoke alarms, test all', hours: 3 }],
+  },
+  {
+    name: 'Add a double power point',
+    description: 'Starter package: adjust hours and add the GPO and cable.',
+    lines: [{ kind: 'labour', description: 'Install new double GPO off existing circuit, test', hours: 1 }],
+  },
+]
+
+/** Creates the starter packages for a workspace. Returns how many were made. */
+export async function createStarterPackages(tenantId: string, userId: string): Promise<number> {
+  let made = 0
+  for (const p of STARTER_PACKAGES) {
+    await createPackage({ tenantId, userId, name: p.name, description: p.description, lines: p.lines })
+    made++
+  }
+  return made
+}

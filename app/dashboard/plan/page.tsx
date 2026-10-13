@@ -185,6 +185,20 @@ export default function PlanPage() {
           )}
         </div>
       </section>
+
+      {/* ── Your data ── */}
+      {isOwner && (
+        <section className={card}>
+          <h2 className="text-lg font-semibold text-slate-900">Your data</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Download everything in this workspace (customers, jobs, quotes, invoices, payments, test sheets and
+            assets) as one file. It is yours to keep or take elsewhere.
+          </p>
+          <a href={`/api/export?tenantId=${encodeURIComponent(currentTenant.id)}`} className={`${secondaryBtn} mt-4 inline-block`}>
+            Download my data
+          </a>
+        </section>
+      )}
     </div>
   )
 }

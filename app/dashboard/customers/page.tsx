@@ -112,6 +112,12 @@ export default function CustomersPage() {
             Everyone you have worked for, their history, and who is worth contacting again.
           </p>
         </div>
+        <Link
+          href="/dashboard/customers/import"
+          className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+        >
+          Import from CSV
+        </Link>
       </div>
 
       {/* Summary */}
