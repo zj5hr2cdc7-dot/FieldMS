@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
-import { sendCustomerLink } from '@/lib/notifications'
+import { sendCustomerLink, anyDelivered, describeDelivery } from '@/lib/notifications'
 
 /**
  * POST /api/documents/send — email/SMS the branded document link to the
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
   const subject = `Your ${docTitle} — ${businessName}`
   const signatureHtml = branding?.email_signature ? `<p style="color:#64748b;font-size:13px;white-space:pre-wrap">${branding.email_signature}</p>` : ''
 
-  await sendCustomerLink({
+  const delivery = await sendCustomerLink({
     businessName,
     customerPhone: job?.customer_phone,
     customerEmail: job?.customer_email,
@@ -68,13 +68,30 @@ export async function POST(request: Request) {
     `,
   })
 
+  /*
+   * Only record a send that happened. This used to write event_type:'sent'
+   * unconditionally and return ok:true, so with no mail credentials the audit
+   * trail claimed a delivery nobody made. On a compliance product that is
+   * manufactured evidence, which is worse than a visible failure.
+   */
+  if (!anyDelivered(delivery)) {
+    return NextResponse.json(
+      { error: describeDelivery(delivery), delivery },
+      { status: 502 }
+    )
+  }
+
   await admin.from('form_audit_events').insert({
     submission_id: submission.id,
     tenant_id: submission.tenant_id,
     event_type: 'sent',
     actor_name: technicianName,
-    meta: { to_email: job?.customer_email, to_phone: job?.customer_phone },
+    meta: {
+      to_email: delivery.email.status === 'sent' ? job?.customer_email : null,
+      to_phone: delivery.sms.status === 'sent' ? job?.customer_phone : null,
+      channels: { sms: delivery.sms.status, email: delivery.email.status },
+    },
   })
 
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, message: describeDelivery(delivery), delivery })
 }

@@ -184,8 +184,15 @@ export default function MaterialsPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Materials & live pricing</h1>
-          <p className="text-slate-500 mt-1">Always-current material prices — market data plus your own trade accounts. No more manual price books.</p>
+          <h1 className="text-3xl font-bold text-slate-900">Materials &amp; pricing</h1>
+          {/* Was "Materials & live pricing / Always-current material prices".
+              With one catalogue-backed connector and no scheduled refresh,
+              neither "live" nor "always-current" was true. */}
+          <p className="text-slate-500 mt-1">
+            Your material prices in one place, with the history behind every change. Link a
+            wholesaler trade account and its pricing flows through here as soon as that feed is
+            available.
+          </p>
         </div>
         <div className="flex gap-2">
           <Link href="/dashboard/materials/packages" className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
@@ -240,7 +247,14 @@ export default function MaterialsPage() {
                 <label className="block text-sm text-slate-600 mb-1">Preferred supplier</label>
                 <select value={preferredSupplier} onChange={(e) => setPreferredSupplier(e.target.value)} className={`${inputCls} w-full`}>
                   <option value="">Select…</option>
-                  {CONNECTORS.map((c) => <option key={c.key} value={c.key}>{c.name}</option>)}
+                  {/* Seven of the eight connectors have no live feed yet and
+                      their fetchOffers() throws. Choosing one as the preferred
+                      supplier produced no pricing and said nothing about why. */}
+                  {CONNECTORS.map((c) => (
+                    <option key={c.key} value={c.key}>
+                      {c.name}{c.ready ? '' : ' (no live feed yet)'}
+                    </option>
+                  ))}
                 </select>
               </div>
             )}
@@ -261,6 +275,15 @@ export default function MaterialsPage() {
           {/* Linked trade accounts */}
           <div className="border-t border-slate-100 pt-4">
             <h3 className="text-sm font-semibold text-slate-800 mb-2">Linked wholesaler trade accounts</h3>
+            {/* Honest about the state of play: linking records your account
+                number so trade pricing can switch on the day a feed exists, but
+                no wholesaler feed is live today. */}
+            <p className="mb-3 text-xs text-slate-500">
+              Australian wholesalers do not publish open pricing APIs, so these need a data-feed
+              agreement with each supplier. Linking your account number now means trade pricing turns
+              on by itself the day a feed goes live. Until then your prices come from the sources
+              above.
+            </p>
             <div className="flex flex-wrap gap-2 mb-3">
               {CONNECTORS.map((c) => {
                 const linked = linkedKeys.has(c.key)
@@ -277,7 +300,9 @@ export default function MaterialsPage() {
               <select value={linkSupplier} onChange={(e) => setLinkSupplier(e.target.value)} className={inputCls}>
                 <option value="">Link a supplier…</option>
                 {CONNECTORS.filter((c) => c.supportsTradeAccounts && !linkedKeys.has(c.key)).map((c) => (
-                  <option key={c.key} value={c.key}>{c.name}</option>
+                  <option key={c.key} value={c.key}>
+                    {c.name}{c.ready ? '' : ' (no live feed yet)'}
+                  </option>
                 ))}
               </select>
               <input value={linkAccountRef} onChange={(e) => setLinkAccountRef(e.target.value)} placeholder="Your account / customer number" className={`${inputCls} flex-1`} />
