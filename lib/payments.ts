@@ -56,7 +56,10 @@ export async function syncJobToAccounting(jobId: string): Promise<{
   invoice_unchanged?: boolean
   error?: string
 }> {
-  const res = await fetch('/api/integrations/xero/sync', {
+  // Was '/api/integrations/xero/sync', which hardcoded Xero even though this
+  // function is named for accounting generally. The new route resolves
+  // whichever package the workspace has connected.
+  const res = await fetch('/api/integrations/accounting/sync', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ jobId }),

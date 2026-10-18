@@ -11,7 +11,7 @@
  *     instead of re-pushed (re-pushing is how sync loops corrupt data).
  *
  * Server-side only (uses the admin client). Called from
- * app/api/integrations/xero/sync/route.ts.
+ * app/api/integrations/accounting/sync/route.ts.
  */
 
 import { createAdminClient } from '@/utils/supabase/admin'
