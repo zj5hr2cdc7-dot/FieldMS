@@ -56,6 +56,7 @@ export async function POST(request: Request) {
   const businessName = tenant?.name || 'Your electrician'
 
   const delivery = await sendCustomerLink({
+    tenantId: report.tenant_id,
     businessName,
     customerPhone: job.customer_phone,
     customerEmail: job.customer_email,

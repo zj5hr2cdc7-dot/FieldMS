@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { requireTenantRole } from '@/lib/authz'
 import { getStripe, appOrigin, notConfigured } from '@/lib/stripe'
+import { CUSTOMER_PAYMENTS_ENABLED, featureDisabled } from '@/lib/features'
 import { syncConnectedAccount } from '@/lib/stripe-sync'
 
 export const runtime = 'nodejs'
@@ -21,6 +22,13 @@ export const runtime = 'nodejs'
  */
 
 export async function POST(request: Request) {
+  // Off by default: stalled KYC onboarding, chargebacks and missing payouts
+  // are all unautomatable support, and facilitating payments between two
+  // other parties is regulated here. See lib/features.ts.
+  if (!CUSTOMER_PAYMENTS_ENABLED) {
+    return featureDisabled('Taking card payments from your customers is not switched on yet.')
+  }
+
   const stripe = getStripe()
   if (!stripe) return notConfigured()
 
@@ -75,6 +83,13 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
+  // Off by default: stalled KYC onboarding, chargebacks and missing payouts
+  // are all unautomatable support, and facilitating payments between two
+  // other parties is regulated here. See lib/features.ts.
+  if (!CUSTOMER_PAYMENTS_ENABLED) {
+    return featureDisabled('Taking card payments from your customers is not switched on yet.')
+  }
+
   const tenantId = new URL(request.url).searchParams.get('tenantId') ?? ''
   const authz = await requireTenantRole(tenantId, ['owner', 'manager'])
   if (!authz.ok) return NextResponse.json({ error: authz.error }, { status: authz.status })

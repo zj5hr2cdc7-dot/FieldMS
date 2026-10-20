@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/utils/supabase/admin'
+import { CUSTOMER_PAYMENTS_ENABLED, featureDisabled } from '@/lib/features'
 import { getStripe, appOrigin, notConfigured } from '@/lib/stripe'
 
 export const runtime = 'nodejs'
@@ -20,6 +21,14 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ token: string }> }
 ) {
+  // Customer-facing: this is someone about to pay a bill, so the wording
+  // tells them what to do next rather than naming a feature flag.
+  if (!CUSTOMER_PAYMENTS_ENABLED) {
+    return featureDisabled(
+      'Online card payment is not available for this invoice. Please use the payment details on the invoice.'
+    )
+  }
+
   const stripe = getStripe()
   if (!stripe) return notConfigured()
 

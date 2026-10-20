@@ -97,6 +97,7 @@ export async function POST(
   let delivery: DeliveryResult | null = null
   try {
     delivery = await notifyCustomer({
+      tenantId: job.tenant_id,
       eventType,
       jobTitle: job.title,
       businessName,

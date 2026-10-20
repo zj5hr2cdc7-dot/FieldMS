@@ -53,6 +53,7 @@ export async function POST(request: Request) {
   const signatureHtml = branding?.email_signature ? `<p style="color:#64748b;font-size:13px;white-space:pre-wrap">${branding.email_signature}</p>` : ''
 
   const delivery = await sendCustomerLink({
+    tenantId: submission.tenant_id,
     businessName,
     customerPhone: job?.customer_phone,
     customerEmail: job?.customer_email,

@@ -2,6 +2,7 @@ import twilio from 'twilio'
 import { Resend } from 'resend'
 import type { JobEventType } from '@/types/database'
 import { escapeHtml } from '@/lib/message-templates'
+import { getSmsQuota, recordSmsAttempt, exhaustedMessage } from '@/lib/sms-quota'
 
 /**
  * Customer notifications (SMS via Twilio, email via Resend).
@@ -37,6 +38,8 @@ export type ChannelOutcome =
   | { status: 'unconfigured'; reason: string }
   /** The provider rejected it. */
   | { status: 'failed'; reason: string }
+  /** This month's SMS allowance is used up. Email is unaffected. */
+  | { status: 'quota_exceeded'; reason: string }
 
 export interface DeliveryResult {
   sms: ChannelOutcome
@@ -57,6 +60,9 @@ export function describeDelivery(result: DeliveryResult): string {
     if (outcome.status === 'sent') sent.push(channel)
     else if (outcome.status === 'unconfigured') problems.push(`${channel} is not configured on this server`)
     else if (outcome.status === 'failed') problems.push(`${channel} failed: ${outcome.reason}`)
+    // Not a failure and not a fault: a known limit, reached. Worded so the
+    // business knows the customer still heard from them.
+    else if (outcome.status === 'quota_exceeded') problems.push(outcome.reason)
   }
 
   if (sent.length && !problems.length) return `Sent by ${sent.join(' and ')}.`
@@ -80,6 +86,7 @@ function getResendClient() {
 
 /** Shared sender so the two public functions cannot drift apart. */
 async function deliver({
+  tenantId,
   businessName,
   customerPhone,
   customerEmail,
@@ -87,6 +94,12 @@ async function deliver({
   text,
   html,
 }: {
+  /**
+   * Required. SMS is metered per tenant per month (lib/sms-quota.ts), and
+   * this is the single place a text can be sent from — so the allowance is
+   * enforced here and cannot be routed around by adding another caller.
+   */
+  tenantId: string
   businessName: string
   customerPhone: string | null | undefined
   customerEmail: string | null | undefined
@@ -101,8 +114,20 @@ async function deliver({
     if (!client || !from) {
       return { status: 'unconfigured', reason: 'TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN or TWILIO_PHONE_NUMBER is not set' }
     }
+
+    // Check the allowance BEFORE calling Twilio. Checking afterwards would
+    // mean paying for the message we are about to refuse.
+    const quota = await getSmsQuota(tenantId)
+    if (quota.exhausted) {
+      await recordSmsAttempt(tenantId, 'blocked')
+      return { status: 'quota_exceeded', reason: exhaustedMessage(quota) }
+    }
+
     try {
       const msg = await client.messages.create({ to: customerPhone, from, body: text })
+      // Counted only on success: a message Twilio rejected costs nothing and
+      // must not eat somebody's allowance.
+      await recordSmsAttempt(tenantId, 'sent')
       return { status: 'sent', id: msg.sid }
     } catch (err) {
       const reason = err instanceof Error ? err.message : 'unknown error'
@@ -185,6 +210,7 @@ function buildMessage(eventType: JobEventType, rawTitle: string, trackingUrl: st
  * Returns what actually happened. Check it before telling anyone it was sent.
  */
 export async function sendCustomerLink(args: {
+  tenantId: string
   businessName: string
   customerPhone: string | null | undefined
   customerEmail: string | null | undefined
@@ -197,6 +223,7 @@ export async function sendCustomerLink(args: {
 
 /** Job lifecycle notification. Same contract: check the result. */
 export async function notifyCustomer({
+  tenantId,
   eventType,
   jobTitle,
   businessName,
@@ -204,6 +231,7 @@ export async function notifyCustomer({
   customerEmail,
   trackingUrl,
 }: {
+  tenantId: string
   eventType: JobEventType
   jobTitle: string
   businessName: string
@@ -213,6 +241,7 @@ export async function notifyCustomer({
 }): Promise<DeliveryResult> {
   const message = buildMessage(eventType, jobTitle, trackingUrl, businessName)
   return deliver({
+    tenantId,
     businessName,
     customerPhone,
     customerEmail,

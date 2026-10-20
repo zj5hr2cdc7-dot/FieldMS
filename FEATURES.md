@@ -8,6 +8,7 @@ marketing copy. 57 pages, 30 API routes, 58 tables, 52 library modules.
 | | |
 |---|---|
 | **Live** | Built, on `main`, running at fieldms.com.au |
+| **Off** | Built and tested, switched off behind a flag in `lib/features.ts` |
 | **Branch** | Built and working, on a branch, not deployed |
 | **Needs key** | Code complete; dead until an env var or migration is set |
 | **Unverified** | Written, never run against the real third party |
@@ -130,8 +131,9 @@ marketing copy. 57 pages, 30 API routes, 58 tables, 52 library modules.
 
 | Feature | Status | Notes |
 |---|---|---|
-| Customer email | **Needs key** | `RESEND_API_KEY`. Now fails loudly rather than faking success |
-| Customer SMS | **Needs key** | `TWILIO_*`. Same |
+| Customer email | **Needs key** | `RESEND_API_KEY`. Fails loudly rather than faking success. Unlimited |
+| Customer SMS | **Needs key** | `TWILIO_*`. **Metered per plan** — 50 / 250 / 600 a month. Email keeps sending when it runs out |
+| SMS allowance readout | Branch | `/dashboard/plan`, and `/api/sms/quota` for the field app |
 | Message templates | Branch | `/dashboard/messages` |
 | Automatic reminders | Branch | `/dashboard/reminders`, daily cron |
 | Google review requests | Branch | On job completion |
@@ -157,8 +159,8 @@ note at the end of this file.
 |---|---|
 | Stripe subscription checkout | Branch |
 | Customer billing portal | Branch |
-| Stripe Connect onboarding | Branch |
-| Pay-now on customer invoices | Branch |
+| Stripe Connect onboarding | **Off** | `NEXT_PUBLIC_CUSTOMER_PAYMENTS_ENABLED` |
+| Pay-now on customer invoices | **Off** | Same flag |
 | Webhook idempotency | Branch |
 
 ## 11. Integrations
@@ -166,9 +168,9 @@ note at the end of this file.
 | Feature | Status | Notes |
 |---|---|---|
 | Xero OAuth | **Needs key** | `XERO_CLIENT_ID` / `SECRET` |
-| Xero invoice + payment sync | **Needs key** | Real implementation, idempotent |
+| Xero invoice + payment sync | **Off** | `NEXT_PUBLIC_ACCOUNTING_SYNC_ENABLED`. Real implementation, idempotent |
 | MYOB OAuth | **Needs key** | `MYOB_*` |
-| MYOB invoice + payment sync | **Unverified** | Written, never run against a company file. Run `preflightMyob()` first |
+| MYOB invoice + payment sync | **Off / Unverified** | Same flag. Never run against a company file — `preflightMyob()` first |
 | Google Maps | **Needs key** | |
 | Anthropic (Fault Finder) | **Blocked** | Switched off pending copyright review |
 
@@ -185,6 +187,25 @@ note at the end of this file.
 | Data export | Branch | `/api/export` |
 | SEO | Live | robots, sitemap, JSON-LD, canonicals |
 | Audit tooling | Live | `npm run audit:all` |
+
+---
+
+## What is deliberately switched off
+
+Three features are complete and switched off in `lib/features.ts`, because
+being able to build something is not the same as being able to afford to run
+it with one person and no revenue:
+
+| Feature | Flag | Why |
+|---|---|---|
+| Fault Finder | `NEXT_PUBLIC_FAULT_FINDER_ENABLED` | Safety-critical advice; copyright review |
+| Accounting sync | `NEXT_PUBLIC_ACCOUNTING_SYNC_ENABLED` | Breaks inside someone else's books; MYOB unverified |
+| Customer card payments | `NEXT_PUBLIC_CUSTOMER_PAYMENTS_ENABLED` | Chargebacks, KYC, payouts; regulated |
+
+Every flag is off unless the variable is exactly `"true"`, so a missing
+variable fails safe. Turn each on for **one willing business** before everyone.
+
+SMS is deliberately **not** flagged. It stays on and is metered instead.
 
 ---
 

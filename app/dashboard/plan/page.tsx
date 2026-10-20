@@ -30,6 +30,9 @@ export default function PlanPage() {
 
   const [sub, setSub] = useState<TenantSubscription | null>(null)
   const [payments, setPayments] = useState<PaymentAccountStatus>({ connected: false })
+  const [sms, setSms] = useState<{
+    plan: string; allowance: number; sent: number; remaining: number; period: string; exhausted: boolean
+  } | null>(null)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState('')
@@ -39,6 +42,11 @@ export default function PlanPage() {
     let cancelled = false
     // Also runs when the owner comes back from Stripe (?connect=return), which
     // is what refreshes the payments status after onboarding.
+    fetch(`/api/sms/quota?tenantId=${currentTenant.id}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d?.quota && setSms(d.quota))
+      .catch(() => {})
+
     Promise.all([getSubscription(currentTenant.id), getPaymentAccountStatus(currentTenant.id)])
       .then(([s, p]) => {
         if (cancelled) return
@@ -84,6 +92,44 @@ export default function PlanPage() {
         </div>
       )}
       {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+
+      {/* ── Customer text messages ──
+          Shown here rather than buried in settings because it is the one
+          allowance that runs out mid-month, and the failure mode without it
+          is a business discovering the limit from a customer who says they
+          never got a text. */}
+      {sms && (
+        <section className={card}>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Customer text messages</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Texts to your customers this month. Emails are unlimited.
+              </p>
+            </div>
+            <p className="shrink-0 text-right">
+              <span className={`text-2xl font-black ${sms.exhausted ? 'text-amber-600' : 'text-slate-900'}`}>
+                {sms.remaining}
+              </span>
+              <span className="block text-xs text-slate-400">of {sms.allowance} left</span>
+            </p>
+          </div>
+
+          <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+            <div
+              className={`h-full rounded-full ${sms.exhausted ? 'bg-amber-500' : 'bg-brand'}`}
+              style={{ width: `${Math.min(100, (sms.sent / Math.max(1, sms.allowance)) * 100)}%` }}
+            />
+          </div>
+
+          {sms.exhausted && (
+            <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              You have used this month&apos;s texts. Your customers are still being emailed, and the
+              allowance resets at the start of next month. Upgrading your plan raises it.
+            </p>
+          )}
+        </section>
+      )}
 
       {/* ── FieldMS plan ── */}
       <section className={card}>

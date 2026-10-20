@@ -3,6 +3,7 @@ import { createAdminClient } from '@/utils/supabase/admin'
 import { requireTenantRole } from '@/lib/authz'
 import { syncJobToXero } from '@/lib/accounting-sync'
 import { syncJobToMyob } from '@/lib/myob-sync'
+import { ACCOUNTING_SYNC_ENABLED, featureDisabled } from '@/lib/features'
 
 /**
  * POST /api/integrations/accounting/sync
@@ -33,6 +34,17 @@ export async function POST(request: Request) {
 
   const jobId = typeof body.jobId === 'string' ? body.jobId : null
   if (!jobId) return NextResponse.json({ error: 'jobId is required' }, { status: 400 })
+
+  // Switched off by default. When accounting sync goes wrong it goes wrong
+  // inside somebody else's books, which is urgent, hard to unwind and lands
+  // on one person's phone. MYOB has additionally never run against a real
+  // company file. Turn on per-deployment via NEXT_PUBLIC_ACCOUNTING_SYNC_ENABLED
+  // once there is a willing business to try it with. See lib/features.ts.
+  if (!ACCOUNTING_SYNC_ENABLED) {
+    return featureDisabled(
+      'Accounting sync is not switched on yet. Your invoices are all still here — nothing is lost.'
+    )
+  }
 
   const admin = createAdminClient()
 
