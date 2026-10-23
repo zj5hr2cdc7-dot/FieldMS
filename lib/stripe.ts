@@ -10,6 +10,7 @@
  */
 import Stripe from 'stripe'
 import { SITE_URL } from '@/lib/seo'
+import { monthlyFor } from '@/lib/plans-public'
 
 let _stripe: Stripe | null = null
 
@@ -21,9 +22,14 @@ export function getStripe(): Stripe | null {
   return _stripe
 }
 
+/**
+ * The amounts come from lib/plans-public.ts so the landing page and the
+ * checkout cannot drift apart. The env vars map a plan to its Stripe Price
+ * id; they do not carry the amount.
+ */
 export const PLANS = {
-  founding: { label: 'Founding member', monthly: 69, env: 'STRIPE_PRICE_FOUNDING' },
-  standard: { label: 'Standard', monthly: 99, env: 'STRIPE_PRICE_STANDARD' },
+  founding: { label: 'Founding member', monthly: monthlyFor('founding'), env: 'STRIPE_PRICE_FOUNDING' },
+  standard: { label: 'Standard', monthly: monthlyFor('standard'), env: 'STRIPE_PRICE_STANDARD' },
 } as const
 
 export type PlanKey = keyof typeof PLANS
