@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { getJobs, updateJob } from '@/lib/jobs'
 import GettingStarted from '@/components/GettingStarted'
 import MoneyAtAGlance from '@/components/MoneyAtAGlance'
+import SampleJobCard from '@/components/SampleJobCard'
 import { getQuarterlyPnL } from '@/lib/billing'
 import type { Job, JobStatus } from '@/types/database'
 import type { QuarterlyPnL } from '@/lib/billing'
@@ -106,6 +107,9 @@ export default function DashboardPage() {
           New job
         </Link>
       </div>
+
+      {/* Sample job: offered to an empty workspace, removable once added */}
+      <SampleJobCard jobCount={jobs.length} onChange={fetchJobs} />
 
       {/* Money and work at a glance (office only) */}
       <MoneyAtAGlance />
