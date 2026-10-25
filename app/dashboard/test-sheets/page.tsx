@@ -30,6 +30,12 @@ export default function TestSheetsPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
+  // Opened from "Finish job" or a job link: preselect that job.
+  useEffect(() => {
+    const fromLink = new URLSearchParams(window.location.search).get('job')
+    if (fromLink) queueMicrotask(() => setSelectedJobId(fromLink))
+  }, [])
+
   useEffect(() => {
     if (!currentTenant) return
     getJobs(currentTenant.id)
@@ -197,6 +203,9 @@ export default function TestSheetsPage() {
               <div>
                 <p className="font-semibold text-green-800">Certificate {sheet.certificate_number} issued</p>
                 <p className="text-sm text-green-700 mt-0.5">This sheet is locked. Share the certificate link with your customer.</p>
+                <a href={`/dashboard/finish/${sheet.job_id}`} className="mt-2 inline-block text-sm font-semibold text-green-800 underline">
+                  Next: send it and invoice the job →
+                </a>
               </div>
               <div className="flex gap-2">
                 <button type="button" onClick={copyLink} className="rounded-lg border border-green-300 bg-white px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-100 transition-colors">

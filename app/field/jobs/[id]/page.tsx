@@ -9,6 +9,7 @@ import { updateJobStatusOfflineAware } from '@/lib/offline-queue'
 import { startEntry, endEntry, getOpenEntries, type TimeEntry } from '@/lib/time-tracking'
 import type { Job, JobStatus } from '@/types/database'
 import { FAULT_FINDER_ENABLED } from '@/lib/features'
+import { isOffice } from '@/lib/roles'
 
 const STATUS_STEP: Partial<Record<JobStatus, { next: JobStatus; label: string }>> = {
   open: { next: 'in_progress', label: 'Start job' },
@@ -24,7 +25,7 @@ function extractLines(desc: string | null, keywords: string[]): string[] {
 export default function FieldJobDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id: jobId } = use(params)
   const router = useRouter()
-  const { currentTenant, session } = useAuthContext()
+  const { currentTenant, session, userRole } = useAuthContext()
   const userId = session?.user?.id
 
   const [job, setJob] = useState<Job | null>(null)
@@ -118,6 +119,14 @@ export default function FieldJobDetail({ params }: { params: Promise<{ id: strin
           className="w-full rounded-xl border border-slate-200 bg-white shadow-sm py-3 text-base font-semibold text-slate-700 active:bg-slate-50 disabled:opacity-60">
           {travelOpen ? 'Stop travel' : 'Start travel to site'}
         </button>
+      )}
+
+      {/* Owner or manager on the tools: test sheet, certificate, invoice in one place */}
+      {isOffice(userRole) && job.status !== 'open' && (
+        <Link href={`/dashboard/finish/${job.id}`}
+          className="block w-full rounded-xl border-2 border-brand bg-white py-3 text-center text-base font-semibold text-brand-dark active:bg-green-50">
+          Finish job: test sheet, certificate, invoice
+        </Link>
       )}
 
       {/* Hazards */}
