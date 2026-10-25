@@ -3,7 +3,7 @@
  * tomorrow and a priced quote linked to it, so an owner can click through
  * quote → job → test sheet → invoice before entering anything real.
  *
- * Everything created is flagged is_sample (migration 033) and removed by
+ * Everything created is flagged is_sample (migration 034) and removed by
  * removeSampleData(). The sample customer has no email or phone, so no
  * reminder or message can ever go to a real person from it.
  */
