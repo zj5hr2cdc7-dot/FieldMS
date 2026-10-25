@@ -9,7 +9,26 @@ Step 6 is the merge, and it is last on purpose.
 
 ---
 
-## 1. Run the two migrations
+## 0. Status, 26 October
+
+Done: migrations 028 and 034 are applied to production, the five
+`demo1234` logins are banned, and the branch is pushed and building green
+on `field-ms` (the project that owns fieldms.com.au).
+
+Still to do, in order: **migration 029**, then the merge, then steps 2–7
+below.
+
+Two things changed since this file was written:
+
+- **Migration 029 was added** and must be run. See step 1.
+- **The `fieldms` Vercel project is a stale duplicate.** It was created
+  6 September, holds only `fieldms.vercel.app`, and its last production
+  deploy is "Initial commit". It shows red on the pull request and that
+  red is meaningless. `field-ms` is the real project: it holds
+  `fieldms.com.au`, `www.fieldms.com.au` and `field-ms-iota.vercel.app`.
+  Worth deleting `fieldms` so the next red mark means something.
+
+## 1. Run the migrations
 
 Supabase → SQL editor → paste each file whole and run. **Run the whole file in
 one go** rather than selecting statements — some older migrations contain DO
@@ -19,6 +38,7 @@ blocks that break if split (that is what broke migration 027).
 |---|---|
 | `supabase/migrations/028_job_packages.sql` | The Packages screen errors |
 | `supabase/migrations/034_sms_quota.sql` | The SMS allowance lookup errors |
+| `supabase/migrations/029_customer_messaging.sql` | **Not yet run.** The Messages screen errors, and the automatic review request on job completion logs an error and gives up |
 
 Both have been checked against the real Postgres parser and are safe to paste
 in one piece. Both are safe to re-run.
@@ -82,8 +102,31 @@ when you have a willing business to try each with:
 
 ## 6. Merge to main
 
-Only after 1–5. GitHub → Pull requests → new PR from `feature/payments` into
-`main` → merge. Vercel deploys on merge.
+PR #1 is open and has 18 commits. All checks pass and there are no
+conflicts, so this is one click on **Merge pull request** → **Confirm
+merge**. Vercel deploys `field-ms` on merge.
+
+Ignore the red `fieldms` row in the Vercel comment — see step 0.
+
+### Why the first preview build failed, so it does not happen again
+
+Two committed files imported two files that were never committed:
+
+    lib/notifications.ts             ->  @/lib/message-templates
+    app/api/jobs/[jobId]/events/     ->  @/lib/customer-messaging
+
+Both resolved locally, because the files were sitting in the working
+tree untracked. Neither resolved on Vercel, which only ever gets a fresh
+clone. `npm run build` passing on this machine proved nothing.
+
+If a build fails on Vercel but passes locally, check this first:
+
+```bash
+git clone --depth 1 --branch <branch> . /tmp/check && cd /tmp/check \
+  && npm install && npx next build
+```
+
+That is the only build that counts.
 
 Then check on the live site:
 
