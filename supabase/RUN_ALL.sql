@@ -5,7 +5,7 @@
 --
 -- SAFE TO RUN AGAIN AFTER A FAILURE
 --   The original migrations are not re-runnable. Guards added on the way into
---   this file: 65 policies, 14 triggers, 3 indexes, 1 tables.
+--   this file: 72 policies, 14 triggers, 3 indexes, 1 tables.
 --   Before this, a run that stopped partway could not simply be repeated: it
 --   failed on "already exists" with the schema half applied. Statements are
 --   identified by parsing them with the real PostgreSQL grammar, not by
@@ -2352,6 +2352,230 @@ CREATE POLICY "Office manages estimate items" ON public.estimate_items FOR ALL
 
 CREATE INDEX IF NOT EXISTS idx_estimate_items_estimate_id
   ON public.estimate_items(estimate_id);
+
+-- ============================================================
+-- ==  028_job_packages.sql
+-- ==  Job packages: reusable labour + material bundles
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS public.job_packages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  description TEXT,
+  -- Retired rather than deleted, so historical jobs keep a meaningful
+  -- reference to the package they were billed from.
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS job_packages_tenant_name_key
+  ON public.job_packages (tenant_id, lower(name));
+
+CREATE INDEX IF NOT EXISTS job_packages_tenant_idx
+  ON public.job_packages (tenant_id) WHERE active;
+
+CREATE TABLE IF NOT EXISTS public.job_package_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  package_id UUID NOT NULL REFERENCES public.job_packages(id) ON DELETE CASCADE,
+  -- Denormalised on purpose. Every policy below can then test tenant_id
+  -- directly instead of joining back to job_packages. The audit flagged
+  -- join-based isolation as the thing most likely to be got wrong.
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL CHECK (kind IN ('labour', 'material')),
+  description TEXT NOT NULL,
+
+  -- Labour
+  hours NUMERIC(8, 2),
+  rate_per_hour NUMERIC(10, 2),
+
+  -- Material
+  master_product_id UUID REFERENCES public.master_products(id) ON DELETE SET NULL,
+  quantity NUMERIC(12, 2),
+  unit_cost_override NUMERIC(12, 4),
+
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+
+  -- A labour line needs hours and must not carry a product.
+  CONSTRAINT job_package_items_labour_shape CHECK (
+    kind <> 'labour' OR (
+      hours IS NOT NULL AND hours > 0
+      AND master_product_id IS NULL
+      AND quantity IS NULL
+      AND unit_cost_override IS NULL
+    )
+  ),
+
+  -- A material line needs a quantity, and needs somewhere to get a price
+  -- from: either a catalogue product (resolved live) or a pinned unit cost.
+  -- Without one of those, applying the package would silently add a $0 line.
+  CONSTRAINT job_package_items_material_shape CHECK (
+    kind <> 'material' OR (
+      quantity IS NOT NULL AND quantity > 0
+      AND hours IS NULL
+      AND rate_per_hour IS NULL
+      AND (master_product_id IS NOT NULL OR unit_cost_override IS NOT NULL)
+    )
+  )
+);
+
+CREATE INDEX IF NOT EXISTS job_package_items_package_idx
+  ON public.job_package_items (package_id, sort_order);
+
+CREATE INDEX IF NOT EXISTS job_package_items_tenant_idx
+  ON public.job_package_items (tenant_id);
+
+ALTER TABLE public.job_packages ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.job_package_items ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Members read packages" ON public.job_packages;
+
+DROP POLICY IF EXISTS "Members read packages" ON public.job_packages;
+
+CREATE POLICY "Members read packages" ON public.job_packages
+  FOR SELECT USING (public.is_member(tenant_id));
+
+DROP POLICY IF EXISTS "Office manages packages" ON public.job_packages;
+
+DROP POLICY IF EXISTS "Office manages packages" ON public.job_packages;
+
+CREATE POLICY "Office manages packages" ON public.job_packages
+  FOR ALL USING (public.is_office(tenant_id)) WITH CHECK (public.is_office(tenant_id));
+
+DROP POLICY IF EXISTS "Members read package items" ON public.job_package_items;
+
+DROP POLICY IF EXISTS "Members read package items" ON public.job_package_items;
+
+CREATE POLICY "Members read package items" ON public.job_package_items
+  FOR SELECT USING (public.is_member(tenant_id));
+
+DROP POLICY IF EXISTS "Office manages package items" ON public.job_package_items;
+
+DROP POLICY IF EXISTS "Office manages package items" ON public.job_package_items;
+
+CREATE POLICY "Office manages package items" ON public.job_package_items
+  FOR ALL USING (public.is_office(tenant_id)) WITH CHECK (public.is_office(tenant_id));
+
+ALTER TABLE public.job_billing_items
+  ADD COLUMN IF NOT EXISTS source_package_id UUID REFERENCES public.job_packages(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS job_billing_items_source_package_idx
+  ON public.job_billing_items (source_package_id) WHERE source_package_id IS NOT NULL;
+
+COMMENT ON TABLE public.job_packages IS
+  'Reusable labour + material bundles. Applying one writes job_billing_items.';
+
+COMMENT ON COLUMN public.job_package_items.unit_cost_override IS
+  'Pinned unit cost. NULL means resolve the live price for master_product_id when applied.';
+
+COMMENT ON COLUMN public.job_package_items.rate_per_hour IS
+  'Pinned labour rate. NULL means use the rate supplied at apply time.';
+
+-- ============================================================
+-- ==  029_customer_messaging.sql
+-- ==  Message templates, review requests, charge-out rate
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS public.message_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+  -- Set when the row overrides a built-in template; NULL for custom ones.
+  template_key TEXT,
+  name TEXT NOT NULL,
+  category TEXT NOT NULL DEFAULT 'custom'
+    CHECK (category IN ('quotes', 'scheduling', 'payments', 'reviews', 'follow_up', 'custom')),
+  subject TEXT NOT NULL DEFAULT '',
+  sms_body TEXT NOT NULL DEFAULT '',
+  email_body TEXT NOT NULL DEFAULT '',
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS message_templates_tenant_key
+  ON public.message_templates (tenant_id, template_key) WHERE template_key IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS message_templates_tenant_idx
+  ON public.message_templates (tenant_id);
+
+ALTER TABLE public.message_templates ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Members read message templates" ON public.message_templates;
+
+DROP POLICY IF EXISTS "Members read message templates" ON public.message_templates;
+
+CREATE POLICY "Members read message templates" ON public.message_templates
+  FOR SELECT USING (public.is_member(tenant_id));
+
+DROP POLICY IF EXISTS "Office manages message templates" ON public.message_templates;
+
+DROP POLICY IF EXISTS "Office manages message templates" ON public.message_templates;
+
+CREATE POLICY "Office manages message templates" ON public.message_templates
+  FOR ALL USING (public.is_office(tenant_id)) WITH CHECK (public.is_office(tenant_id));
+
+CREATE TABLE IF NOT EXISTS public.customer_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+  job_id UUID REFERENCES public.jobs(id) ON DELETE SET NULL,
+  customer_id UUID REFERENCES public.customers(id) ON DELETE SET NULL,
+  template_key TEXT,
+  template_name TEXT,
+  -- 'review_request_auto' marks the automatic send on job completion.
+  source TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual', 'review_request_auto')),
+  to_phone TEXT,
+  to_email TEXT,
+  subject TEXT,
+  sms_body TEXT,
+  email_body TEXT,
+  sent_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS customer_messages_job_idx
+  ON public.customer_messages (job_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS customer_messages_tenant_idx
+  ON public.customer_messages (tenant_id, created_at DESC);
+
+ALTER TABLE public.customer_messages ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Office reads customer messages" ON public.customer_messages;
+
+DROP POLICY IF EXISTS "Office reads customer messages" ON public.customer_messages;
+
+CREATE POLICY "Office reads customer messages" ON public.customer_messages
+  FOR SELECT USING (public.is_office(tenant_id));
+
+ALTER TABLE public.tenants
+  ADD COLUMN IF NOT EXISTS review_request_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  -- Which channels the automatic request uses.
+  ADD COLUMN IF NOT EXISTS review_request_sms BOOLEAN NOT NULL DEFAULT TRUE,
+  ADD COLUMN IF NOT EXISTS review_request_email BOOLEAN NOT NULL DEFAULT TRUE;
+
+ALTER TABLE public.jobs
+  ADD COLUMN IF NOT EXISTS review_requested_at TIMESTAMP WITH TIME ZONE;
+
+ALTER TABLE public.tenants
+  ADD COLUMN IF NOT EXISTS default_labour_rate NUMERIC(10, 2),
+  ADD COLUMN IF NOT EXISTS rate_calculator JSONB;
+
+COMMENT ON TABLE public.message_templates IS
+  'Per-business SMS/email templates. template_key set = override of a built-in from lib/message-templates.ts.';
+
+COMMENT ON TABLE public.customer_messages IS
+  'Log of messages sent to customers. Written by the server only.';
+
+COMMENT ON COLUMN public.jobs.review_requested_at IS
+  'When the review request went out. Set once; stops a re-completed job asking twice.';
+
+COMMENT ON COLUMN public.tenants.default_labour_rate IS
+  'Charge-out rate per hour ex GST, from the rate calculator. Prefills labour lines.';
 
 -- ============================================================
 -- ==  demo_walkthrough.sql
