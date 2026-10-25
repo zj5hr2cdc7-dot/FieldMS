@@ -14,6 +14,7 @@ import {
   certificateUrl,
 } from '@/lib/testsheets'
 import type { Job, JobTestSheet, TestSheetCircuit } from '@/types/database'
+import { saveTestSheetOfflineAware, isOnline } from '@/lib/offline-queue'
 
 export default function TestSheetsPage() {
   const { currentTenant, session } = useAuthContext()
@@ -81,7 +82,8 @@ export default function TestSheetsPage() {
     if (!sheet) return
     setSaving(true); setError(null); setSuccess(null)
     try {
-      const saved = await updateTestSheet(sheet.id, {
+      // Saves on the phone if there's no signal and syncs later.
+      const { queued } = await saveTestSheetOfflineAware(sheet.id, {
         installation_address: sheet.installation_address,
         switchboard_location: sheet.switchboard_location,
         supply_type: sheet.supply_type,
@@ -91,8 +93,7 @@ export default function TestSheetsPage() {
         test_date: sheet.test_date,
         notes: sheet.notes,
       })
-      setSheet(saved)
-      setSuccess('Test sheet saved.')
+      setSuccess(queued ? 'Saved on this device. It will sync when you have signal.' : 'Test sheet saved.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save.')
     } finally {
@@ -102,6 +103,12 @@ export default function TestSheetsPage() {
 
   const handleComplete = async () => {
     if (!sheet) return
+    // Issuing a certificate number needs the server, so save locally and wait.
+    if (!isOnline()) {
+      await handleSave()
+      setError('You are offline. Your results are saved; issue the certificate once you have signal.')
+      return
+    }
     setSaving(true); setError(null); setSuccess(null)
     try {
       // Persist latest edits first so the certificate reflects what's on screen
