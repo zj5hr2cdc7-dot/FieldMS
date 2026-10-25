@@ -25,6 +25,7 @@ import Logo from '@/components/Logo'
 import MarketingNav from '@/components/marketing/MarketingNav'
 import { PLAN_CARDS, GST_LABEL, GST_REGISTERED } from '@/lib/plans-public'
 import SignedInRedirect from '@/components/marketing/SignedInRedirect'
+import { FAULT_FINDER_ENABLED, ACCOUNTING_SYNC_ENABLED, CUSTOMER_PAYMENTS_ENABLED } from '@/lib/features'
 
 export const metadata: Metadata = {
   // The homepage is the canonical root. Without this, the apex and www
@@ -243,6 +244,19 @@ export default function Home() {
           </div>
 
           {[
+            // Flagged features appear here only when their switch is on, so the
+            // page cannot advertise something /api refuses to serve. Flip the
+            // variable in Vercel and the card appears on the next deploy;
+            // nobody has to remember to edit this copy. See lib/features.ts.
+            ...(FAULT_FINDER_ENABLED
+              ? [['M13 10V3L4 14h7v7l9-11h-7z', 'Fault Finder', 'Describe the fault and get ranked likely causes and the next test to run. Guidance only, you make the call.', 'bg-yellow-50 text-yellow-600']]
+              : []),
+            ...(ACCOUNTING_SYNC_ENABLED
+              ? [['M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z', 'Accounting sync', 'Push invoices and payments straight through to Xero or MYOB instead of keying them twice.', 'bg-blue-50 text-blue-600']]
+              : []),
+            ...(CUSTOMER_PAYMENTS_ENABLED
+              ? [['M3 10h18M7 15h1m4 0h1m-7 4h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z', 'Card payments', 'Your customer taps Pay now on the invoice and the money lands in your account.', 'bg-rose-50 text-rose-600']]
+              : []),
             ['M8 7V3m8 4V3M3 11h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z', 'Scheduling', 'Plan your crew’s week in seconds. Everyone sees their jobs on their phone.', 'bg-sky-50 text-sky-600'],
             ['M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.6a1 1 0 0 1 .7.3l5.4 5.4a1 1 0 0 1 .3.7V19a2 2 0 0 1-2 2z', 'Compliance built in', 'Test sheets and certificates signed on site and sent before you leave.', 'bg-amber-50 text-amber-600'],
             ['M3 9a2 2 0 0 1 2-2h.93a2 2 0 0 0 1.664-.89l.812-1.22A2 2 0 0 1 10.07 4h3.86a2 2 0 0 1 1.664.89l.812 1.22A2 2 0 0 0 18.07 7H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9zM15 13a3 3 0 1 1-6 0 3 3 0 0 1 6 0z', 'Site reports', 'Photos and notes against the job, sent to your customer as a link they can open on any phone.', 'bg-green-50 text-brand-dark'],

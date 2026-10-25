@@ -69,7 +69,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "FieldMS | Job management software for Australian electricians",
     description:
-      "Quote, schedule, invoice and stay compliant in one AI-powered platform, built with Australian electricians.",
+      "Quote, schedule, invoice and stay compliant in one platform, built with Australian electricians.",
     type: "website",
     locale: "en_AU",
     siteName: "FieldMS",
