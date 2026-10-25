@@ -164,7 +164,7 @@ domain, an uploaded HTML file is a stored-XSS vector against that origin.
 `branding` and `job-photos` are correctly restricted. Fix: add allowlists to
 migration 026 (PDF/image/DWG for plans; PDF/image for attachments).
 
-### H5 · `public.jobs` has no migration — **NOT FIXED**
+### H5 · `public.jobs` has no migration — **TOOL PROVIDED, needs one run**
 
 The central table of the application — referenced by 15 migrations — has no
 `CREATE TABLE` anywhere in `supabase/migrations/`. Consequences: the database
