@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   // words go first: what it is, who it is for, where. "The all-in-one platform"
   // was spending the first twenty characters saying nothing searchable.
   description:
-    "Job management software for Australian electricians. Quote on site, schedule your crew, complete test sheets and certificates, and invoice before you leave. Free during early access.",
+    "Job management software for Australian electricians. Quote on site, schedule your crew, complete test sheets and certificates, and invoice before you leave. One price for the whole crew.",
   applicationName: "FieldMS",
   category: "business",
   keywords: [

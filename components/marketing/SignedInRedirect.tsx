@@ -19,6 +19,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthContext } from '@/context/AuthContext'
+import { normaliseRole } from '@/lib/roles'
 
 export default function SignedInRedirect() {
   const router = useRouter()
@@ -27,7 +28,12 @@ export default function SignedInRedirect() {
   useEffect(() => {
     // ?preview=1 keeps the page visible for signed-in users (design review)
     if (window.location.search.includes('preview')) return
-    if (!loading && session) router.replace(userRole === 'member' ? '/field' : '/dashboard')
+    if (!loading && session) {
+      // normaliseRole, not a raw 'member' comparison. 'member' is the pre-024
+      // name for technician, so anyone stored as 'technician' fell through to
+      // /dashboard — the owner surface — instead of the field app.
+      router.replace(normaliseRole(userRole) === 'technician' ? '/field' : '/dashboard')
+    }
   }, [session, loading, userRole, router])
 
   return null

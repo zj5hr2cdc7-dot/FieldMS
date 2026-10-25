@@ -5,10 +5,14 @@ import { useAuthContext } from '@/context/AuthContext'
 import { getAnnouncements, type Announcement } from '@/lib/field'
 import { postAnnouncement, deleteAnnouncement, getTenantTimesheets, type TimesheetRow } from '@/lib/staff'
 import { netWorkedMinutes, formatHm, startOfWeekIso } from '@/lib/time-tracking'
+import { capabilities } from '@/lib/roles'
 
 export default function StaffPage() {
   const { currentTenant, session, userRole } = useAuthContext()
-  const isAdmin = userRole === 'owner' || userRole === 'admin'
+  // 'admin' has not existed since migration 024 (it is 'manager'). Raw
+  // comparison meant a legacy 'admin' row got owner-level actions, and a
+  // 'manager' got none. capabilities() is the single definition.
+  const isAdmin = capabilities(userRole).manageStaff
 
   const [tab, setTab] = useState<'timesheets' | 'announcements'>('timesheets')
   const [timesheets, setTimesheets] = useState<TimesheetRow[]>([])

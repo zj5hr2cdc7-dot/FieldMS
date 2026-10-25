@@ -1,5 +1,6 @@
 import type { AuthSession, AuthUser, Tenant, TenantMember, Profile } from '@/types/database'
 import { createClient } from '@/utils/supabase/client'
+import { normaliseRole, type Role } from '@/lib/roles'
 
 // Client-side auth functions
 export async function getCurrentSessionClient(): Promise<AuthSession | null> {
@@ -21,7 +22,21 @@ export async function getCurrentSessionClient(): Promise<AuthSession | null> {
   const roleStr = tenant
     ? await getUserRoleInTenant(session.user.id, tenant.id)
     : null
-  const role = (roleStr as 'owner' | 'admin' | 'member' | null) || null
+  /*
+   * normaliseRole, not a cast.
+   *
+   * Migration 024 moved the role model to owner | manager | technician, but
+   * this line still asserted the OLD union (owner | admin | member). A cast
+   * does not convert anything — it just tells TypeScript to stop checking —
+   * so a member whose stored role is 'manager' arrived here typed as
+   * something that cannot be 'manager', and every downstream role comparison
+   * was reasoning about a value the type system had been told to ignore.
+   *
+   * normaliseRole maps the legacy values forward (admin -> manager,
+   * member -> technician) and defaults unknown values to technician, which is
+   * the least-privileged option and therefore the safe way to fail.
+   */
+  const role = roleStr ? normaliseRole(roleStr) : null
 
   return {
     user: session.user as unknown as AuthUser,
@@ -104,7 +119,7 @@ export async function getTenant(tenantId: string): Promise<Tenant | null> {
   return data
 }
 
-export async function updateTenant(tenantId: string, updates: Partial<Pick<Tenant, 'name' | 'google_reviews_url' | 'abn' | 'phone' | 'website'>>): Promise<Tenant> {
+export async function updateTenant(tenantId: string, updates: Partial<Pick<Tenant, 'name' | 'google_reviews_url' | 'abn' | 'phone' | 'website' | 'review_request_enabled' | 'review_request_sms' | 'review_request_email' | 'default_labour_rate' | 'rate_calculator'>>): Promise<Tenant> {
   const supabase = createClient()
   const { data, error } = await supabase
     .from('tenants')
@@ -227,16 +242,30 @@ export async function addTenantMember(
   return data
 }
 
+/**
+ * Change someone's role in a workspace.
+ *
+ * The signature used to be 'owner' | 'admin' | 'member' — the pre-024 roles.
+ * Migration 024 added CHECK (role IN ('owner','manager','technician')), so
+ * this function could only ever be called with values the database would
+ * reject, and could not be called with the two roles that actually exist.
+ * Same shape of bug as the invite flow: a function that cannot succeed.
+ *
+ * Takes Role from lib/roles.ts, which is the single definition, and
+ * normalises so a legacy value from an old caller still lands somewhere valid.
+ */
 export async function updateTenantMemberRole(
   tenantId: string,
   userId: string,
-  role: 'owner' | 'admin' | 'member'
+  role: Role | string
 ) {
+  const nextRole = normaliseRole(role)
+
   const supabase = createClient()
 
   const { data, error } = await supabase
     .from('tenant_members')
-    .update({ role })
+    .update({ role: nextRole })
     .eq('tenant_id', tenantId)
     .eq('user_id', userId)
     .select()
