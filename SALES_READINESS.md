@@ -129,7 +129,8 @@ live. Nothing in sections C or D matters until this is pushed and deployed.
 ### B2. Two migrations have not been run
 
 - `028_job_packages.sql` — Packages errors without it
-- `032_sms_quota.sql` — the SMS quota lookup errors without it
+- `supabase/GENERATE_JOBS_BASELINE.sql` — run once, save the output as `migrations/000_baseline_jobs.sql`, so the database can be rebuilt from git
+- `034_sms_quota.sql` — the SMS quota lookup errors without it
 
 Both are verified to survive the Supabase editor splitting on semicolons.
 

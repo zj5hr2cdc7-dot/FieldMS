@@ -13,8 +13,9 @@
     "audit:rls": "node scripts/audit-rls.mjs",
     "audit:licences": "node scripts/audit-licences.mjs",
     "test:security": "node scripts/security-tests.mjs",
-    "audit:all": "npm run audit:rls && npm run audit:licences && npm run test:security && npm audit --omit=dev",
-    "test:isolation": "node scripts/cross-tenant-tests.mjs"
+    "audit:all": "npm run audit:rls && npm run audit:migrations && npm run audit:licences && npm run test:security && npm audit --omit=dev",
+    "test:isolation": "node scripts/cross-tenant-tests.mjs",
+    "audit:migrations": "node scripts/audit-migrations.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.105.0",
