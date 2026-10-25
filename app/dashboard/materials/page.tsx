@@ -146,9 +146,10 @@ export default function MaterialsPage() {
   }
 
   const handleRefresh = async () => {
+    if (!currentTenant) return
     setRefreshing(true); setError(null)
     try {
-      const result = await triggerRefresh()
+      const result = await triggerRefresh(currentTenant.id)
       const changed = (result.results as { priceChanges?: number }[]).reduce((s, r) => s + (r.priceChanges ?? 0), 0)
       setSuccess(`Prices refreshed from ${result.results.length} supplier(s) — ${changed} price change(s) recorded.`)
       if (result.failures.length) setError(result.failures.map((f) => `${f.supplier}: ${f.error}`).join(' · '))

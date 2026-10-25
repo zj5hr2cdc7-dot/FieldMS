@@ -180,8 +180,19 @@ export async function resolvePrices(
   return { prices: body.prices, trends: body.trends }
 }
 
-export async function triggerRefresh(): Promise<{ ok: boolean; results: unknown[]; failures: { supplier: string; error: string }[] }> {
-  const res = await fetch('/api/pricing/refresh', { method: 'POST' })
+/**
+ * Manual "refresh prices now". Takes a tenantId because the route is now
+ * owner/manager-only and rate-limited per workspace — it writes the shared
+ * catalogue, so it cannot be left open to any signed-in user.
+ */
+export async function triggerRefresh(
+  tenantId: string
+): Promise<{ ok: boolean; suppliersRefreshed: number; results: unknown[]; failures: { supplier: string; error: string }[] }> {
+  const res = await fetch('/api/pricing/refresh', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tenantId }),
+  })
   const body = await res.json()
   if (!res.ok) throw new Error(body.error || 'Refresh failed')
   return body
