@@ -7,6 +7,7 @@ import { useAuthContext } from '@/context/AuthContext'
 import { billingCapabilities, type BillingCapabilities } from '@/lib/permissions'
 import ApplyPackage from '@/components/ApplyPackage'
 import MessageCustomer from '@/components/MessageCustomer'
+import JobProfitability from '@/components/JobProfitability'
 import { isOffice } from '@/lib/roles'
 import { getJob } from '@/lib/jobs'
 import { recordPayment } from '@/lib/payments'
@@ -34,7 +35,7 @@ import type {
   VariationStatus,
 } from '@/types/billing'
 
-type Tab = 'dashboard' | 'variations' | 'invoices' | 'payments' | 'timeline'
+type Tab = 'dashboard' | 'profitability' | 'variations' | 'invoices' | 'payments' | 'timeline'
 const money = (n: number | null | undefined) => (n === null || n === undefined ? '—' : `A$${n.toFixed(2)}`)
 
 const VARIATION_COLORS: Record<VariationStatus, string> = {
@@ -152,6 +153,7 @@ export default function JobBillingPage({ params }: { params: Promise<{ id: strin
       <div className="flex gap-1 border-b border-slate-200 overflow-x-auto">
         {([
           ['dashboard', 'Dashboard'],
+          ['profitability', 'Profitability'],
           ['variations', `Variations (${variations.length})`],
           ['invoices', `Invoices (${invoices.length})`],
           ['payments', `Payments (${payments.length})`],
@@ -165,6 +167,14 @@ export default function JobBillingPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {tab === 'dashboard' && <DashboardTab job={job} f={financials} caps={caps} onSaved={refresh} flash={flash} />}
+      {tab === 'profitability' && (
+        <JobProfitability
+          tenantId={currentTenant?.id ?? ''}
+          jobId={jobId}
+          isOffice={isOffice(userRole)}
+          canEdit={isOffice(userRole)}
+        />
+      )}
       {tab === 'variations' && (
         <VariationsTab
           variations={variations} caps={caps} tenantId={currentTenant?.id ?? ''} jobId={jobId} userId={user?.id ?? ''} actorName={actorName}

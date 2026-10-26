@@ -170,7 +170,11 @@ export function calculateJobCost(input: JobCostInputs): JobCostResult {
       `${uncostedHours.toLocaleString('en-AU')} hours have no cost rate and are excluded from the labour cost. Set cost rates to see the real margin.`
     )
   if (unreconciled > 0)
-    warnings.push(`${unreconciled} material line${unreconciled === 1 ? '' : 's'} still use the quoted supplier price rather than the invoiced one.`)
+    warnings.push(
+      unreconciled === 1
+        ? '1 material line still uses the quoted supplier price rather than the invoiced one.'
+        : `${unreconciled} material lines still use the quoted supplier price rather than the invoiced one.`
+    )
   if (unbilledRevenueExGst > 0)
     warnings.push('This includes completed work that has not been invoiced yet, so it is not cash.')
 
