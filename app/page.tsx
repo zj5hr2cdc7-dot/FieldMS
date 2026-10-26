@@ -438,6 +438,7 @@ export default function Home() {
           <Logo size="sm" textColor="text-slate-700" />
           <div className="flex gap-6">
             <a href="#pricing" className="transition-colors hover:text-slate-700">Pricing</a>
+            <Link href="/charge-out-rate-calculator" className="transition-colors hover:text-slate-700">Rate calculator</Link>
             <Link href="/login" className="transition-colors hover:text-slate-700">Log in</Link>
             <Link href="/privacy" className="transition-colors hover:text-slate-700">Privacy</Link>
             <Link href="/terms" className="transition-colors hover:text-slate-700">Terms</Link>

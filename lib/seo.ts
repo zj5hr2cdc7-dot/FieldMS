@@ -57,6 +57,9 @@ export const PUBLIC_ROUTES: {
 }[] = [
   { path: '/', changeFrequency: 'weekly', priority: 1 },
   { path: '/signup', changeFrequency: 'monthly', priority: 0.8 },
+  // A free tool answering a question people actively search for, so it has a
+  // real chance of ranking on its own rather than only via the brand name.
+  { path: '/charge-out-rate-calculator', changeFrequency: 'monthly', priority: 0.9 },
   { path: '/login', changeFrequency: 'monthly', priority: 0.3 },
   // Low priority but deliberately indexable: a customer, a lawyer and an app
   // store reviewer all need to be able to find these without being logged in.
