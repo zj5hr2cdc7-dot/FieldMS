@@ -12,7 +12,7 @@
  * a banner keeps offering to finish, and Setup stays in the More menu.
  *
  * Every answer customises the app: trades gate modules (only electrical
- * trades see FieldMS Fault Finder), branding lands on every document,
+ * trades see the electrical test sheets), branding lands on every document,
  * wholesalers pre-populate the account centre, and the tour launches on the
  * dashboard at the end.
  */
@@ -20,7 +20,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthContext } from '@/context/AuthContext'
-import { updateTenant, addTenantMember } from '@/lib/auth'
+import { updateTenant } from '@/lib/auth'
+import { inviteTeamMember } from '@/lib/team'
 import {
   TRADES,
   STEP_ORDER,
@@ -384,7 +385,7 @@ export default function OnboardingWizard() {
           <h2 className="text-2xl font-black tracking-tight text-slate-900">What services does your business provide?</h2>
           <p className="mt-2 text-sm text-slate-500">
             Select everything that applies and FieldMS customises your tools to match. Electrical trades also get
-            FieldMS Fault Finder and the electrical test sheets.
+            the electrical test sheets and certificates.
           </p>
           <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {TRADES.map((t) => {
@@ -434,13 +435,13 @@ export default function OnboardingWizard() {
           </div>
           {hasHvac(trades) && !hasElectrical(trades) && (
             <p className="mt-4 rounded-lg bg-sky-50 p-3 text-sm text-sky-800">
-              We&apos;ll set you up with jobs, quotes, scheduling and invoicing. FieldMS Fault Finder and the
-              electrical test sheets are built for electricians, so we&apos;ll keep those out of your way.
+              We&apos;ll set you up with jobs, quotes, scheduling and invoicing. The electrical test
+              sheets are built for electricians, so we&apos;ll keep those out of your way.
             </p>
           )}
           {hasHvac(trades) && hasElectrical(trades) && (
             <p className="mt-4 rounded-lg bg-green-50 p-3 text-sm text-green-800">
-              You&apos;ll get the full toolset, including FieldMS Fault Finder for the electrical side of the work.
+              You&apos;ll get the full toolset, including electrical test sheets and certificates.
             </p>
           )}
           <WizardNav
@@ -668,6 +669,7 @@ export default function OnboardingWizard() {
                 Invited: {invited.join(', ')}
               </p>
             )}
+
           </div>
           <WizardNav
             saving={saving}
@@ -677,15 +679,25 @@ export default function OnboardingWizard() {
             onNext={() => advance('team', async () => {
               const emails = invites.split('\n').map((e) => e.trim()).filter((e) => /.+@.+\..+/.test(e))
               const ok: string[] = []
+              const failed: string[] = []
               for (const email of emails) {
                 try {
-                  await addTenantMember(tenantId, email, 'member')
+                  await inviteTeamMember(tenantId, email, 'technician')
                   ok.push(email)
                 } catch {
-                  // Unregistered emails can be invited again from Team later
+                  failed.push(email)
                 }
               }
-              setInvited(ok)
+              setInvited((prev) => [...prev, ...ok])
+              if (failed.length) {
+                // Used to be swallowed, so the owner moved on believing their
+                // crew had been invited. Stay on this step, leave only the
+                // failed addresses in the box, and say so.
+                setInvites(failed.join('\n'))
+                throw new Error(
+                  `Could not invite ${failed.join(', ')}. Check the address and try again, or skip and invite them later from Settings, then Team.`
+                )
+              }
             })}
           />
         </div>
@@ -699,7 +711,7 @@ export default function OnboardingWizard() {
           <p className="mx-auto mt-3 max-w-md text-slate-500">
             {hasHvac(trades) && !hasElectrical(trades)
               ? 'FieldMS is now tuned for your HVAC work: jobs, quotes, scheduling and invoicing are ready to go.'
-              : 'FieldMS is tuned for electrical work. FieldMS Fault Finder, AS/NZS 3000 help and test sheets are ready.'}
+              : 'FieldMS is tuned for electrical work. Test sheets and certificates are ready.'}
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <button type="button" disabled={saving} onClick={() => finish(true)} className="btn btn-primary btn-lg w-full sm:w-auto">

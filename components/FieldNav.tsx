@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useAuthContext } from '@/context/AuthContext'
 import { canUseFaultFinder, getTradesCached } from '@/lib/onboarding'
+import { FAULT_FINDER_ENABLED } from '@/lib/features'
 
 const TABS: { href: string; label: string; icon: string }[] = [
   { href: '/field', label: 'Home', icon: 'M3 12l9-9 9 9M5 10v10h14V10' },
@@ -28,7 +29,7 @@ export default function FieldNav() {
       .catch(() => setFaultFinder(true))
   }, [currentTenant])
 
-  const tabs = faultFinder ? TABS : TABS.filter((t) => t.href !== '/field/assistant')
+  const tabs = FAULT_FINDER_ENABLED && faultFinder ? TABS : TABS.filter((t) => t.href !== '/field/assistant')
 
   return (
     <nav className="fixed bottom-0 inset-x-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">

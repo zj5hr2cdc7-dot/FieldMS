@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { requireJobAccess } from '@/lib/authz'
 import { createJobEvent, getLatestJobEvent, getOrCreateTrackingToken } from '@/lib/tracking'
-import { notifyCustomer } from '@/lib/notifications'
+import { notifyCustomer, anyDelivered, describeDelivery, type DeliveryResult } from '@/lib/notifications'
+import { maybeSendReviewRequest } from '@/lib/customer-messaging'
 import type { JobEventType, JobStatus } from '@/types/database'
 
 const EVENT_TO_STATUS: Record<JobEventType, JobStatus> = {
@@ -74,13 +75,59 @@ export async function POST(
     }
   }
 
-  notifyCustomer({
-    eventType,
-    jobTitle: job.title,
-    customerPhone: job.customer_phone,
-    customerEmail: job.customer_email,
-    trackingUrl,
-  }).catch((err) => console.error('Notification error:', err))
+  const [{ data: tenant }, { data: branding }] = await Promise.all([
+    admin.from('tenants').select('name').eq('id', job.tenant_id).single(),
+    admin.from('tenant_branding').select('trading_name').eq('tenant_id', job.tenant_id).maybeSingle(),
+  ])
+  const businessName = branding?.trading_name || tenant?.name || 'Your contractor'
 
-  return NextResponse.json({ event })
+  /*
+   * Awaited, but never allowed to fail the request.
+   *
+   * It used to be fire-and-forget. Two problems with that: on a serverless
+   * host the function can freeze before an un-awaited promise runs, so the
+   * customer notification might never be attempted at all (the same reason
+   * the review request below is awaited); and the outcome was thrown away, so
+   * nobody ever learned the message had not gone.
+   *
+   * Marking a job started must not fail because Twilio is down, so the result
+   * rides along in the response instead and the UI can say "started, but the
+   * customer was not notified".
+   */
+  let delivery: DeliveryResult | null = null
+  try {
+    delivery = await notifyCustomer({
+      tenantId: job.tenant_id,
+      eventType,
+      jobTitle: job.title,
+      businessName,
+      customerPhone: job.customer_phone,
+      customerEmail: job.customer_email,
+      trackingUrl,
+    })
+    if (!anyDelivered(delivery)) {
+      console.warn(`Customer not notified for job ${jobId}: ${describeDelivery(delivery)}`)
+    }
+  } catch (err) {
+    console.error('Notification error:', err)
+  }
+
+  // Google review request, if the business has switched it on. Awaited so it
+  // runs before the function is frozen on serverless hosts; it never throws
+  // into the response because a failed review text must not undo completion.
+  if (eventType === 'job_completed') {
+    try {
+      await maybeSendReviewRequest(jobId, new URL(request.url).origin, authz.userId)
+    } catch (err) {
+      console.error('Review request failed:', err)
+    }
+  }
+
+  return NextResponse.json({
+    event,
+    // null when the notification threw outright; otherwise the per-channel
+    // outcome, so the client can tell the user if nothing reached the customer.
+    notification: delivery,
+    notificationMessage: delivery ? describeDelivery(delivery) : null,
+  })
 }

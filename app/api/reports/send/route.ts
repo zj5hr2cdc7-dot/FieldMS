@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
-import { sendCustomerLink } from '@/lib/notifications'
+import { sendCustomerLink, anyDelivered, describeDelivery } from '@/lib/notifications'
 
 /**
  * POST /api/reports/send
@@ -55,7 +55,8 @@ export async function POST(request: Request) {
   const url = `${origin}/report/${report.token}`
   const businessName = tenant?.name || 'Your electrician'
 
-  await sendCustomerLink({
+  const delivery = await sendCustomerLink({
+    tenantId: report.tenant_id,
     businessName,
     customerPhone: job.customer_phone,
     customerEmail: job.customer_email,
@@ -64,7 +65,16 @@ export async function POST(request: Request) {
     html: `<p><strong>${businessName}</strong> has shared a site report for <strong>${job.title}</strong>.</p><p><a href="${url}">View the report with photos →</a></p>`,
   })
 
+  // Same reasoning as documents/send: sent_at is a record of delivery, so it
+  // is only stamped when something actually reached a provider.
+  if (!anyDelivered(delivery)) {
+    return NextResponse.json(
+      { error: describeDelivery(delivery), delivery },
+      { status: 502 }
+    )
+  }
+
   await admin.from('job_reports').update({ sent_at: new Date().toISOString() }).eq('id', reportId)
 
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, message: describeDelivery(delivery), delivery })
 }

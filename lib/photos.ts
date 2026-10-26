@@ -23,7 +23,7 @@ export async function uploadJobPhoto(
 ): Promise<JobPhoto> {
   const supabase = createClient()
   const ext = file.name.split('.').pop() ?? 'jpg'
-  const path = `${tenantId}/${jobId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+  const path = `${tenantId}/${jobId}/${Date.now()}_${crypto.randomUUID()}.${ext}`
 
   const { error: storageError } = await supabase.storage
     .from(BUCKET)

@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthContext } from '@/context/AuthContext'
-import { getTenantMembers, addTenantMember, removeTenantMember } from '@/lib/auth'
+import { getTenantMembers, removeTenantMember } from '@/lib/auth'
+import { inviteTeamMember } from '@/lib/team'
+import { normaliseRole } from '@/lib/roles'
 import type { TenantMember, Profile } from '@/types/database'
 
 export default function TeamPage() {
@@ -10,6 +12,8 @@ export default function TeamPage() {
   const [members, setMembers] = useState<(TenantMember & { profiles: Profile })[]>([])
   const [loading, setLoading] = useState(true)
   const [email, setEmail] = useState('')
+  const [role, setRole] = useState<'technician' | 'manager'>('technician')
+  const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
@@ -36,13 +40,21 @@ export default function TeamPage() {
 
     if (!currentTenant) return
 
+    setSending(true)
     try {
-      await addTenantMember(currentTenant.id, email, 'member')
+      const address = email.trim()
+      const { invited } = await inviteTeamMember(currentTenant.id, address, role)
       setEmail('')
-      setSuccess('Member invited successfully!')
+      setSuccess(
+        invited
+          ? `Invite sent to ${address}. They set a password from the email, then sign in.`
+          : `${address} already had a FieldMS account and has been added to this workspace.`
+      )
       await fetchMembers()
     } catch (err) {
       setError((err instanceof Error ? err.message : null) || 'Failed to add member')
+    } finally {
+      setSending(false)
     }
   }
 
@@ -56,7 +68,9 @@ export default function TeamPage() {
     }
   }
 
-  const isAdmin = userRole === 'owner' || userRole === 'admin'
+  // Managing staff is owner only (lib/roles.ts manageStaff), and the API
+  // route enforces the same rule. normaliseRole maps legacy role names.
+  const isAdmin = normaliseRole(userRole) === 'owner'
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -80,11 +94,21 @@ export default function TeamPage() {
               required
               className="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 placeholder:text-slate-400"
             />
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as 'technician' | 'manager')}
+              aria-label="Role"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            >
+              <option value="technician">Technician</option>
+              <option value="manager">Manager</option>
+            </select>
             <button
               type="submit"
-              className="rounded-lg bg-brand hover:bg-brand-dark px-4 py-2.5 text-sm font-semibold text-white transition-colors"
+              disabled={sending}
+              className="rounded-lg bg-brand hover:bg-brand-dark px-4 py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-60"
             >
-              Invite
+              {sending ? 'Sending…' : 'Invite'}
             </button>
           </form>
         </div>

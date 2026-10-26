@@ -20,6 +20,13 @@ export interface Tenant {
   work_day_start: string | null
   work_day_end: string | null
   working_days: number[] | null
+  /** Migration 029: automatic Google review request on job completion. */
+  review_request_enabled?: boolean
+  review_request_sms?: boolean
+  review_request_email?: boolean
+  /** Migration 029: charge-out rate per hour ex GST, from the rate calculator. */
+  default_labour_rate?: number | null
+  rate_calculator?: Record<string, number> | null
   created_at: string
   updated_at: string
 }
@@ -387,4 +394,38 @@ export interface JobPackageItem {
 
 export interface JobPackageWithItems extends JobPackage {
   items: JobPackageItem[]
+}
+
+// ── Customer messaging (migration 029) ─────────────────────────────────────
+
+export interface MessageTemplateRow {
+  id: string
+  tenant_id: string
+  template_key: string | null
+  name: string
+  category: 'quotes' | 'scheduling' | 'payments' | 'reviews' | 'follow_up' | 'custom'
+  subject: string
+  sms_body: string
+  email_body: string
+  active: boolean
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface CustomerMessage {
+  id: string
+  tenant_id: string
+  job_id: string | null
+  customer_id: string | null
+  template_key: string | null
+  template_name: string | null
+  source: 'manual' | 'review_request_auto'
+  to_phone: string | null
+  to_email: string | null
+  subject: string | null
+  sms_body: string | null
+  email_body: string | null
+  sent_by: string | null
+  created_at: string
 }

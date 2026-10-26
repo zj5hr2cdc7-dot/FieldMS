@@ -6,16 +6,19 @@ The reference material behind the in-app FieldMS Fault Finder chat assistant
 | File | What it is |
 | --- | --- |
 | `system_prompt.md` | The assistant persona, scope and response format. Electrical only. |
-| `fault_finding_manual.md` | "Fault Finder's Bible: Electrical Edition" — the full diagnostic reference text. |
 
 ## How it is used
 
-At runtime the API route reads both files, concatenates them into a single
-system prompt and sends it to Claude with `cache_control: ephemeral`, so the
-manual is cached between turns rather than re-billed on every message. The
-prompt is built once per server process and held in memory.
+At runtime the API route reads `system_prompt.md` and sends it to Claude as
+the system prompt with `cache_control: ephemeral`. The prompt is built once per
+server process and held in memory.
 
-Because the files are read from disk at request time, `next.config.ts` lists
+A third-party book ("Fault Finder's Bible: Electrical Edition") used to be
+appended to the prompt in full. It was removed because FieldMS has no licence
+to reproduce it. Do not add copyrighted manuals or Australian Standards text to
+this folder without a written licence.
+
+Because the file is read from disk at request time, `next.config.ts` lists
 this folder in `outputFileTracingIncludes` so it is bundled into production
 deployments.
 
@@ -29,5 +32,5 @@ entitlement check in the API route.
 ## Editing
 
 Edit the markdown directly. Changes take effect on the next server restart
-(the prompt is cached in module scope). Keep the manual's headings intact —
-the persona instructs the model to navigate the text by section.
+(the prompt is cached in module scope). The persona is a safety control: have a
+licensed electrician review any change before it ships.

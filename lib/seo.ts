@@ -58,6 +58,10 @@ export const PUBLIC_ROUTES: {
   { path: '/', changeFrequency: 'weekly', priority: 1 },
   { path: '/signup', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/login', changeFrequency: 'monthly', priority: 0.3 },
+  // Low priority but deliberately indexable: a customer, a lawyer and an app
+  // store reviewer all need to be able to find these without being logged in.
+  { path: '/privacy', changeFrequency: 'yearly', priority: 0.2 },
+  { path: '/terms', changeFrequency: 'yearly', priority: 0.2 },
 ]
 
 /** Absolute URL for a path, for canonicals and the sitemap. */

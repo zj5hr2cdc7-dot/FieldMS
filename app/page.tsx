@@ -23,7 +23,9 @@ import Image from 'next/image'
 import type { Metadata } from 'next'
 import Logo from '@/components/Logo'
 import MarketingNav from '@/components/marketing/MarketingNav'
+import { PLAN_CARDS, GST_LABEL, GST_REGISTERED } from '@/lib/plans-public'
 import SignedInRedirect from '@/components/marketing/SignedInRedirect'
+import { FAULT_FINDER_ENABLED, ACCOUNTING_SYNC_ENABLED, CUSTOMER_PAYMENTS_ENABLED } from '@/lib/features'
 
 export const metadata: Metadata = {
   // The homepage is the canonical root. Without this, the apex and www
@@ -77,13 +79,18 @@ const structuredData = {
         'Invoicing and progress claims',
         'Electrical test sheets and certificates',
         'Asset and compliance register',
-        'AI fault finding assistant',
+        'Photo site reports',
       ],
+      // Was price:'0' with "Free during early access", which told Google the
+      // product was free while Stripe charged for it. Search engines surface
+      // this directly in results, so a stale figure here is a public price
+      // claim you did not mean to make.
       offers: {
         '@type': 'Offer',
-        price: '0',
+        price: String(PLAN_CARDS[0].monthly),
         priceCurrency: 'AUD',
-        description: 'Free during early access.',
+        availability: 'https://schema.org/InStock',
+        description: `From $${PLAN_CARDS[0].monthly} per month ${GST_LABEL}, whole crew included.`,
       },
       // No aggregateRating: inventing review scores is both a manual-action
       // risk with Google and misleading conduct under Australian Consumer Law.
@@ -132,19 +139,19 @@ export default function Home() {
               growing your business.
             </h1>
             <p className="mt-6 max-w-lg text-lg leading-8 text-slate-600">
-              Quoting, scheduling, invoicing, compliance and an AI offsider. One platform, shaped by
+              Quoting, scheduling, invoicing and compliance. One platform, shaped by
               what tradies told us other software got wrong.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="/signup" className="rounded-lg bg-brand px-6 py-3.5 text-center text-sm font-semibold text-white shadow-lg shadow-brand/25 transition-colors hover:bg-brand-dark">
-                Get early access
+                Get started
               </Link>
               <a href="#how" className="rounded-lg border border-slate-300 bg-white px-6 py-3.5 text-center text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50">
                 See how it works
               </a>
             </div>
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-500">
-              {['Free during early access', 'No card required', 'Built in Australia'].map((t) => (
+              {['Your whole crew, one price', 'Cancel any time', 'Built in Australia'].map((t) => (
                 <span key={t} className="inline-flex items-center gap-1.5"><Icon d={check} className="h-4 w-4 text-brand-dark" /> {t}</span>
               ))}
             </div>
@@ -237,10 +244,23 @@ export default function Home() {
           </div>
 
           {[
+            // Flagged features appear here only when their switch is on, so the
+            // page cannot advertise something /api refuses to serve. Flip the
+            // variable in Vercel and the card appears on the next deploy;
+            // nobody has to remember to edit this copy. See lib/features.ts.
+            ...(FAULT_FINDER_ENABLED
+              ? [['M13 10V3L4 14h7v7l9-11h-7z', 'Fault Finder', 'Describe the fault and get ranked likely causes and the next test to run. Guidance only, you make the call.', 'bg-yellow-50 text-yellow-600']]
+              : []),
+            ...(ACCOUNTING_SYNC_ENABLED
+              ? [['M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z', 'Accounting sync', 'Push invoices and payments straight through to Xero or MYOB instead of keying them twice.', 'bg-blue-50 text-blue-600']]
+              : []),
+            ...(CUSTOMER_PAYMENTS_ENABLED
+              ? [['M3 10h18M7 15h1m4 0h1m-7 4h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z', 'Card payments', 'Your customer taps Pay now on the invoice and the money lands in your account.', 'bg-rose-50 text-rose-600']]
+              : []),
             ['M8 7V3m8 4V3M3 11h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z', 'Scheduling', 'Plan your crew’s week in seconds. Everyone sees their jobs on their phone.', 'bg-sky-50 text-sky-600'],
             ['M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.6a1 1 0 0 1 .7.3l5.4 5.4a1 1 0 0 1 .3.7V19a2 2 0 0 1-2 2z', 'Compliance built in', 'Test sheets and certificates signed on site and sent before you leave.', 'bg-amber-50 text-amber-600'],
-            ['M12 8V4H8m8 0h-4v4m-4 4v4h4m4 0h-4v-4M4 20h16', 'Fault Finder', 'An AI offsider for electricians, trained on the fault finding process and the rules you work to.', 'bg-green-50 text-brand-dark'],
-            ['M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6', 'Your material prices', 'Import your wholesaler price lists and see every price change over time.', 'bg-violet-50 text-violet-600'],
+            ['M3 9a2 2 0 0 1 2-2h.93a2 2 0 0 0 1.664-.89l.812-1.22A2 2 0 0 1 10.07 4h3.86a2 2 0 0 1 1.664.89l.812 1.22A2 2 0 0 0 18.07 7H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9zM15 13a3 3 0 1 1-6 0 3 3 0 0 1 6 0z', 'Site reports', 'Photos and notes against the job, sent to your customer as a link they can open on any phone.', 'bg-green-50 text-brand-dark'],
+            ['M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6', 'Your material prices', 'Set your own prices once and reuse them on every quote, with each change tracked over time.', 'bg-violet-50 text-violet-600'],
             ['M5 12.55a11 11 0 0 1 14 0M8.5 16a6 6 0 0 1 7 0M12 20h.01', 'Built for switchrooms', 'No signal? Mark jobs done anyway. It syncs the moment you are back in range.', 'bg-slate-100 text-slate-600'],
           ].map(([d, title, body, tint]) => (
             <div key={title} className="card p-6 transition-shadow hover:shadow-lg">
@@ -262,7 +282,7 @@ export default function Home() {
           <div className="mt-12 grid gap-6 md:grid-cols-3">
             {[
               ['1', 'Set up in minutes', 'Answer a few questions and FieldMS tunes itself to your electrical work. HVAC and refrigeration are coming soon.'],
-              ['2', 'Connect your world', 'Bring in your wholesaler pricing, and push invoices to Xero to keep the books clean.'],
+              ['2', 'Make it yours', 'Add your logo and licence number, set your rates and material prices, and build packages for the jobs you quote over and over.'],
               ['3', 'Run the day from your phone', 'Quote on site, schedule the crew, capture signatures and invoice before you leave the driveway.'],
             ].map(([n, title, body]) => (
               <div key={n} className="relative rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -314,7 +334,7 @@ export default function Home() {
                 lot.
               </p>
               <p>
-                So that became the goal: make the day-to-day easier for electrical business owners.
+                So that became the goal. Make the day-to-day easier for electrical business owners.
                 Fewer hoops between the start of a job and the end of the day, so you can get on with
                 keeping food on the table.
               </p>
@@ -336,51 +356,67 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── PRICING ── */}
+      {/* ── PRICING ──
+          Prices come from lib/stripe.ts PLANS, which is also what Stripe
+          Checkout charges. Hardcoding them here is how a landing page ends up
+          advertising a number the checkout does not honour.
+
+          GST: see GST_REGISTERED in lib/stripe.ts. Australian pricing has to
+          say which it is, and saying the wrong one is worse than saying
+          nothing. Confirm it before this page goes paid. */}
       <section id="pricing" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20 sm:px-6 sm:py-28">
-        {/*
-          No prices here on purpose. There is no payment processor connected and
-          no billing or trial mechanism in the product, so advertising specific
-          plan prices, a discount and a "14 day free trial" described something
-          we cannot actually deliver or charge for — misleading conduct under
-          the Australian Consumer Law. Early access is the truth, and it is a
-          better offer anyway. Put the plans back when billing is real.
-        */}
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-black tracking-tight sm:text-4xl">Free while we build it with you.</h2>
+          <h2 className="text-3xl font-black tracking-tight sm:text-4xl">One price, everything included.</h2>
           <p className="mt-4 text-lg text-slate-600">
-            FieldMS is in early access with a small group of Australian electricians. It is free to use
-            during early access, there is nothing to pay and no card to enter.
+            No per-user pricing, no feature tiers you have to decode. Your whole crew, all of it, one
+            monthly figure.
           </p>
-          <p className="mt-4 text-slate-600">
-            When we introduce paid plans we will tell early access users first, well before anything is
-            charged, and you will be able to export your data or walk away.
-          </p>
-          <Link
-            href="/signup"
-            className="mt-8 inline-block rounded-lg bg-brand px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand/25 transition-colors hover:bg-brand-dark"
-          >
-            Get early access
-          </Link>
         </div>
-        <div className="mt-14 grid gap-5 lg:grid-cols-3">
-          {[
-            { name: 'Quote to invoice', features: ['Priced quotes on site', 'Customer approves with one tap', 'Jobs, then invoices'] },
-            { name: 'Compliance', features: ['Test sheets against the job', 'Certificates you can hand over', 'Asset & compliance register'] },
-            { name: 'Your crew', features: ['Scheduling and timesheets', 'Field app for technicians', 'FieldMS Fault Finder'] },
-          ].map((p) => (
-            <div key={p.name} className="rounded-xl border border-slate-200 bg-white p-7 shadow-sm transition-shadow hover:shadow-lg">
-              <h3 className="text-lg font-bold">{p.name}</h3>
-              <ul className="mt-5 space-y-2.5">
-                {p.features.map((f) => (
+
+        <div className="mx-auto mt-12 grid max-w-3xl gap-5 sm:grid-cols-2">
+          {PLAN_CARDS.map((plan) => (
+            <div
+              key={plan.key}
+              className={`relative rounded-2xl border bg-white p-7 shadow-sm ${
+                plan.highlight ? 'border-brand shadow-lg shadow-brand/10' : 'border-slate-200'
+              }`}
+            >
+              {plan.highlight && (
+                <span className="absolute -top-3 left-7 rounded-full bg-brand px-3 py-1 text-xs font-bold text-white">
+                  Early access
+                </span>
+              )}
+              <h3 className="text-lg font-bold">{plan.label}</h3>
+              <p className="mt-3">
+                <span className="text-4xl font-black tracking-tight">${plan.monthly}</span>
+                <span className="text-slate-500"> /month {GST_LABEL}</span>
+              </p>
+              <p className="mt-2 text-sm text-slate-500">{plan.blurb}</p>
+              <ul className="mt-6 space-y-2.5">
+                {plan.features.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm text-slate-600">
                     <Icon d={check} className="mt-0.5 h-4 w-4 shrink-0 text-brand-dark" /> {f}
                   </li>
                 ))}
               </ul>
+              <Link
+                href="/signup"
+                className={`mt-7 block rounded-lg px-6 py-3 text-center text-sm font-semibold transition-colors ${
+                  plan.highlight
+                    ? 'bg-brand text-white hover:bg-brand-dark'
+                    : 'border border-slate-300 text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                Get started
+              </Link>
             </div>
           ))}
         </div>
+
+        <p className="mx-auto mt-8 max-w-2xl text-center text-sm text-slate-500">
+          Cancel any time from your account — no phone call, no retention offer. Your data stays
+          exportable whether you are a customer or not.
+        </p>
       </section>
 
       {/* ── CLOSING CTA: green gradient band ── */}
@@ -388,10 +424,10 @@ export default function Home() {
         <div className="mx-auto max-w-6xl overflow-hidden rounded-2xl bg-gradient-to-br from-brand to-brand-dark px-6 py-14 text-center sm:px-8 sm:py-16">
           <h2 className="text-3xl font-black tracking-tight text-white sm:text-4xl">Give your evenings back.</h2>
           <p className="mx-auto mt-4 max-w-md text-lg text-green-50">
-            Free while we are in early access. No card, no contracts. Just less admin and more time on the tools.
+            One price for the whole crew, cancel any time. Just less admin and more time on the tools.
           </p>
           <Link href="/signup" className="mt-8 inline-block rounded-lg bg-white px-7 py-3.5 text-sm font-bold text-brand-dark shadow-lg transition-transform hover:scale-[1.02]">
-            Get early access
+            Get started
           </Link>
         </div>
       </section>
@@ -403,7 +439,8 @@ export default function Home() {
           <div className="flex gap-6">
             <a href="#pricing" className="transition-colors hover:text-slate-700">Pricing</a>
             <Link href="/login" className="transition-colors hover:text-slate-700">Log in</Link>
-            <a href="#" className="transition-colors hover:text-slate-700">Privacy</a>
+            <Link href="/privacy" className="transition-colors hover:text-slate-700">Privacy</Link>
+            <Link href="/terms" className="transition-colors hover:text-slate-700">Terms</Link>
           </div>
           <p>© {new Date().getFullYear()} FieldMS</p>
         </div>

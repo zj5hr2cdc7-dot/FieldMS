@@ -6,14 +6,19 @@ import { join } from 'path'
 import { createClient } from '@/utils/supabase/server'
 import { canUseFaultFinder } from '@/lib/trades'
 import { validateMessages, checkRateLimit, AI_PROVENANCE_HEADERS } from '@/lib/ai-safety'
+import { FAULT_FINDER_ENABLED } from '@/lib/features'
 
 /**
  * FieldMS Fault Finder — electrical fault finding assistant.
  *
- * This is an electrical product only. The persona and the manual behind it are
- * the electrical edition, so access is restricted server-side to workspaces
- * that do electrical work. HVAC and air conditioning businesses get a 403;
- * there is no refrigeration mode.
+ * This is an electrical product only, so access is restricted server-side to
+ * workspaces that do electrical work. HVAC and air conditioning businesses get
+ * a 403; there is no refrigeration mode.
+ *
+ * The persona in knowledge/fault-finder/system_prompt.md is the whole system
+ * prompt. A third-party book used to be appended here in full; it was removed
+ * because FieldMS has no licence to reproduce it. Do not add copyrighted
+ * manuals or standards text back without a written licence.
  */
 
 let _client: Anthropic | null = null
@@ -26,13 +31,10 @@ function getClient(): Anthropic | null {
 const KNOWLEDGE_DIR = join(process.cwd(), 'knowledge', 'fault-finder')
 
 function buildSystemPrompt(): string {
-  const persona = readFileSync(join(KNOWLEDGE_DIR, 'system_prompt.md'), 'utf-8')
-  const manual = readFileSync(join(KNOWLEDGE_DIR, 'fault_finding_manual.md'), 'utf-8')
-  return [persona, '\n\n---\n\n# FAULT FINDING MANUAL (full reference text)\n\n', manual].join('')
+  return readFileSync(join(KNOWLEDGE_DIR, 'system_prompt.md'), 'utf-8')
 }
 
-// Built once per server process. The manual is ~185KB and never changes at
-// runtime, so there's no reason to hit the disk on every message.
+// Built once per server process; the persona never changes at runtime.
 let cachedPrompt: string | null = null
 function getSystemPrompt(): string {
   if (!cachedPrompt) cachedPrompt = buildSystemPrompt()
@@ -40,6 +42,11 @@ function getSystemPrompt(): string {
 }
 
 export async function POST(request: Request) {
+  // Switched off site-wide for now: see lib/features.ts. Nothing reaches the
+  // model while this is off.
+  if (!FAULT_FINDER_ENABLED) {
+    return Response.json({ error: 'Not found' }, { status: 404 })
+  }
   try {
     // A malformed or empty body used to throw here, fall through to the outer
     // catch, and come back as 500 "Fault Finder unavailable" — which points
@@ -60,8 +67,8 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser()
     if (!user) return Response.json({ error: 'Not authenticated' }, { status: 401 })
 
-    // Rate limit before doing any work: each request prepends a ~185KB system
-    // prompt, so an unbounded endpoint is a way to spend the API budget.
+    // Rate limit before doing any work: every request is a paid model call, so
+    // an unbounded endpoint is a way to spend the API budget.
     const rate = checkRateLimit(user.id)
     if (!rate.ok) {
       return Response.json(
@@ -80,8 +87,8 @@ export async function POST(request: Request) {
     const messages = validated.messages
 
     // Trade entitlement, enforced here rather than in the UI: the client can
-    // ask for anything, but only electrical workspaces are ever served the
-    // fault finding manual. RLS restricts this read to tenants the caller is
+    // ask for anything, but only electrical workspaces are ever served
+    // Fault Finder. RLS restricts this read to tenants the caller is
     // a member of.
     let trades: string[] = []
     if (tenantId && typeof tenantId === 'string') {

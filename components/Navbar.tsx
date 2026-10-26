@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { signOut } from '@/lib/auth'
 import Logo from '@/components/Logo'
 import { getTradesCached, moduleGate } from '@/lib/onboarding'
+import { FAULT_FINDER_ENABLED } from '@/lib/features'
 
 // Navigation follows the job lifecycle rather than the feature list:
 // what's on today, who it's for, the work itself, and the money.
@@ -30,8 +31,11 @@ const moreLinks = [
   { label: 'Test Sheets', href: '/dashboard/test-sheets' },
   { label: 'Site Reports', href: '/dashboard/reports' },
   { label: 'Job Plans', href: '/dashboard/plans' },
+  { label: 'Messages', href: '/dashboard/messages' },
   { label: 'Reviews QR', href: '/dashboard/reviews' },
-  { label: 'Fault Finder', href: '/dashboard/assistant' },
+  { label: 'Rate Calculator', href: '/dashboard/rate-calculator' },
+  // Fault Finder is appended below, and only when the flag is on. A nav item
+  // that leads to a "not available" page is worse than no nav item.
 ]
 
 export default function Navbar() {
@@ -53,7 +57,10 @@ export default function Navbar() {
     if (currentTenant) getTradesCached(currentTenant.id).then(setTrades).catch(() => {})
   }, [currentTenant])
   const gate = moduleGate(trades)
-  const visibleMoreLinks = moreLinks
+  const allMoreLinks = FAULT_FINDER_ENABLED
+    ? [...moreLinks, { label: 'Fault Finder', href: '/dashboard/assistant' }]
+    : moreLinks
+  const visibleMoreLinks = allMoreLinks
     .filter((l) => !gate.hiddenNavHrefs.includes(l.href))
     .map((l) => ({ ...l, label: gate.navLabelOverrides[l.href] ?? l.label }))
 

@@ -7,8 +7,9 @@
    we charge" lives. Owners and managers edit; everyone else is read-only
    (and the database says the same thing, via is_office in migration 028).
 
-   Ships empty on purpose. There are no built-in packages, because every
-   business prices its own work — the first one you create is yours.
+   Ships empty, because every business prices its own work. An empty
+   workspace can add a set of labour-only starter packages for common
+   electrical jobs (lib/packages.ts STARTER_PACKAGES) and edit them.
    ============================================================ */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -19,6 +20,7 @@ import { searchProducts } from '@/lib/pricing/client'
 import {
   listPackagesWithItems,
   createPackage,
+  createStarterPackages,
   updatePackage,
   setPackageActive,
   deletePackage,
@@ -463,13 +465,35 @@ export default function PackagesPage() {
             the parts — and it is one click on every job after that.
           </p>
           {canEdit && (
-            <button
-              type="button"
-              onClick={startNew}
-              className="mt-5 rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark"
-            >
-              Create your first package
-            </button>
+            <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={startNew}
+                className="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark"
+              >
+                Create your first package
+              </button>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={async () => {
+                  if (!currentTenant || !session?.user) return
+                  setSaving(true)
+                  setError(null)
+                  try {
+                    await createStarterPackages(currentTenant.id, session.user.id)
+                    await load()
+                  } catch (e) {
+                    setError(e instanceof Error ? e.message : 'Could not add the starter packages')
+                  } finally {
+                    setSaving(false)
+                  }
+                }}
+                className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-60"
+              >
+                {saving ? 'Adding…' : 'Start from common electrical jobs'}
+              </button>
+            </div>
           )}
         </div>
       ) : (

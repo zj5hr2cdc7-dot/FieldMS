@@ -141,7 +141,7 @@ export default function PlansPage() {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".pdf,.png,.jpg,.jpeg,.webp,.dwg,.dxf,.svg"
+            accept=".pdf,.png,.jpg,.jpeg,.webp,.dwg,.dxf"
             className="hidden"
             onChange={handleFileChange}
           />

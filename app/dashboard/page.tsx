@@ -5,6 +5,7 @@ import { useAuthContext } from '@/context/AuthContext'
 import Link from 'next/link'
 import { getJobs, updateJob } from '@/lib/jobs'
 import GettingStarted from '@/components/GettingStarted'
+import MoneyAtAGlance from '@/components/MoneyAtAGlance'
 import { getQuarterlyPnL } from '@/lib/billing'
 import type { Job, JobStatus } from '@/types/database'
 import type { QuarterlyPnL } from '@/lib/billing'
@@ -105,6 +106,9 @@ export default function DashboardPage() {
           New job
         </Link>
       </div>
+
+      {/* Money and work at a glance (office only) */}
+      <MoneyAtAGlance />
 
       {/* Job stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

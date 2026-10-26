@@ -45,8 +45,8 @@ ORDER = [
  ('017_job_billing.sql','Invoices, variations, audit trail'),
  ('018_estimate_job_link.sql','Link estimates to jobs'),
  ('019_field_time_tracking.sql','Timesheets and announcements'),
- ('020_field_privacy.sql','Field staff privacy rules'),
- ('020_wholesaler_integration.sql','Purchase orders and wholesaler accounts'),
+ ('020a_field_privacy.sql','Field staff privacy rules'),
+ ('020b_wholesaler_integration.sql','Purchase orders and wholesaler accounts'),
  ('021_onboarding.sql','Setup wizard state'),
  ('022_tenant_business_details.sql','ABN, phone, website, working hours'),
  ('023_customers_and_sites.sql','Customers and sites'),
@@ -54,6 +54,8 @@ ORDER = [
  ('025_assets_and_compliance.sql','Assets, test history, compliance register'),
  ('026_storage_buckets.sql','Storage buckets for logos, plans and photos'),
  ('027_estimate_items_rls.sql','Quote line item RLS policies'),
+ ('028_job_packages.sql','Job packages: reusable labour + material bundles'),
+ ('029_customer_messaging.sql','Message templates, review requests, charge-out rate'),
 ]
 
 def qualified(rangevar) -> str:

@@ -99,6 +99,10 @@ export default function TrackingPage() {
     mapRef.current.panTo(pos)
   }, [data?.latestLocation, mapsLoaded])
 
+  // Read once rather than inline: NEXT_PUBLIC_ values are substituted at build
+  // time, so this is a constant for the deployment, not a runtime lookup.
+  const mapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+
   const eventLabel = data?.latestEvent
     ? STATUS_LABELS[data.latestEvent.event_type] ?? data.latestEvent.event_type
     : null
@@ -109,11 +113,19 @@ export default function TrackingPage() {
 
   return (
     <>
-      <Script
-        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? ''}`}
-        strategy="afterInteractive"
-        onLoad={() => setMapsLoaded(true)}
-      />
+      {/* Only load Maps when a key exists. This used to interpolate
+          `key=${... ?? ''}`, so with the variable unset Google served its
+          "this page can't load Google Maps correctly" error overlay — on a
+          page the business sends to its own customers. Without a key the
+          section below falls back to the address and status, which is the
+          information that actually matters. */}
+      {mapsKey && (
+        <Script
+          src={`https://maps.googleapis.com/maps/api/js?key=${mapsKey}`}
+          strategy="afterInteractive"
+          onLoad={() => setMapsLoaded(true)}
+        />
+      )}
 
       <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
         {/* Header */}
@@ -163,7 +175,21 @@ export default function TrackingPage() {
                 </div>
               </div>
 
-              {/* Map */}
+              {/* Map, or an honest substitute when no Maps key is configured */}
+              {!mapsKey ? (
+                <div className="card p-6">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                    Destination
+                  </p>
+                  <p className="mt-2 text-lg font-semibold text-slate-900">
+                    {data?.job.customer_address ?? 'Address on file'}
+                  </p>
+                  <p className="mt-3 text-sm text-slate-500">
+                    Live map tracking is not switched on for this business. You will still see each
+                    status update above as your technician travels, arrives and finishes.
+                  </p>
+                </div>
+              ) : (
               <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                 {!data?.latestLocation && (
                   <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-sm">
@@ -176,9 +202,10 @@ export default function TrackingPage() {
                 )}
                 <div ref={mapDivRef} className="h-[420px] w-full" />
               </div>
+              )}
 
               {/* Last location timestamp */}
-              {data?.latestLocation && (
+              {mapsKey && data?.latestLocation && (
                 <p className="text-center text-xs text-slate-400">
                   Location updated {new Date(data.latestLocation.recorded_at).toLocaleTimeString()}
                   {' · '}refreshes every 12 seconds

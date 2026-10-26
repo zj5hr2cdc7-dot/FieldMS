@@ -9,6 +9,7 @@ import { createRecurringOccurrences } from '@/lib/schedule'
 import { updateJobStatusOfflineAware } from '@/lib/offline-queue'
 import { autoGenerateFormsForJob } from '@/lib/forms'
 import TechnicianControls from '@/components/TechnicianControls'
+import MessageCustomer from '@/components/MessageCustomer'
 import type { Job, JobStatus, JobPriority, JobRecurrence, TenantMember, Profile } from '@/types/database'
 
 type Filter = 'all' | JobStatus
@@ -136,6 +137,20 @@ export default function JobsPage() {
     }
   }
 
+  // Google review request on completion. The server decides whether the
+  // business has it switched on and makes sure a job is only asked once, so
+  // this is safe to fire on every completion. Returns a note for the banner.
+  const requestReview = async (jobId: string): Promise<string> => {
+    try {
+      const res = await fetch(`/api/jobs/${jobId}/review-request`, { method: 'POST' })
+      if (!res.ok) return ''
+      const { outcome } = await res.json()
+      return outcome === 'sent' ? ' Review request sent to the customer.' : ''
+    } catch {
+      return ''
+    }
+  }
+
   const handleAdvance = async (job: Job) => {
     const advance = STATUS_NEXT[job.status]
     if (!advance) return
@@ -161,6 +176,7 @@ export default function JobsPage() {
             if (created > 0) autoMsg = ` ${created} compliance form(s) auto-created — see Forms.`
           } catch { /* non-fatal */ }
         }
+        if (advance.next === 'completed') autoMsg += await requestReview(job.id)
         setSuccess(`Job marked as ${advance.next.replace('_', ' ')}.${autoMsg}`); clearSuccess()
         fetchAll()
       }
@@ -174,6 +190,10 @@ export default function JobsPage() {
   const handleStatusChange = async (jobId: string, status: JobStatus) => {
     try {
       await updateJob(jobId, { status })
+      if (status === 'completed') {
+        const note = await requestReview(jobId)
+        if (note) { setSuccess(note.trim()); clearSuccess() }
+      }
       fetchAll()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Update failed')
@@ -485,6 +505,16 @@ export default function JobsPage() {
                           </a>
                         )}
                       </div>
+                    )}
+
+                    {currentTenant && (job.customer_phone || job.customer_email) && (
+                      <MessageCustomer
+                        jobId={job.id}
+                        tenantId={currentTenant.id}
+                        customerPhone={job.customer_phone}
+                        customerEmail={job.customer_email}
+                        buttonClassName="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                      />
                     )}
 
                     {/* Assignment */}

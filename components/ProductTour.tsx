@@ -12,6 +12,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuthContext } from '@/context/AuthContext'
 import { canUseFaultFinder, getTradesCached, saveOnboarding } from '@/lib/onboarding'
+import { FAULT_FINDER_ENABLED } from '@/lib/features'
 
 interface TourStep {
   target?: string
@@ -47,7 +48,7 @@ function buildSteps(faultFinder: boolean): TourStep[] {
     {
       target: 'nav-billing',
       title: '💰 Quotes & Invoices',
-      body: 'Create professional quotes in minutes — live material pricing fills in costs, and one tap turns an approved quote into an invoice.',
+      body: 'Create professional quotes in minutes — your own material prices fill in the costs, and one tap turns an approved quote into an invoice.',
     },
     {
       target: 'nav-forms',
@@ -56,8 +57,8 @@ function buildSteps(faultFinder: boolean): TourStep[] {
     },
     assistantStep,
     {
-      title: '🏷 Live Material Pricing',
-      body: 'Connect your wholesalers and FieldMS keeps your negotiated pricing up to date — with full price history, so you can see exactly what went up and when.',
+      title: '🏷 Material Pricing',
+      body: 'Set your own buy prices and markups once and they carry across every quote and invoice — with full price history, so you can see exactly what went up and when.',
     },
     {
       target: 'nav-user',
@@ -75,7 +76,7 @@ export default function ProductTour() {
 
   const start = useCallback(async () => {
     const trades = currentTenant ? await getTradesCached(currentTenant.id) : []
-    setSteps(buildSteps(canUseFaultFinder(trades)))
+    setSteps(buildSteps(FAULT_FINDER_ENABLED && canUseFaultFinder(trades)))
     setIndex(0)
   }, [currentTenant])
 

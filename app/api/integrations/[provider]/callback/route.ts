@@ -195,7 +195,14 @@ export async function GET(
     )
 
   if (upsertError) {
-    return NextResponse.redirect(`/dashboard/integrations?error=${encodeURIComponent(upsertError.message)}`)
+    // The raw Postgres message went into a URL the user sees and may paste
+    // into a support email. Those messages name tables, columns and
+    // constraints, which is free reconnaissance and means nothing to the
+    // person reading it. Detail to the log, a sentence to the user.
+    console.error(`Integration upsert failed for tenant ${parsed.tenantId}:`, upsertError)
+    return NextResponse.redirect(
+      `/dashboard/integrations?error=${encodeURIComponent('Could not save the connection. Please try again.')}`
+    )
   }
 
   const response = NextResponse.redirect(

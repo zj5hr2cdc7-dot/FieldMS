@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { useAuthContext } from '@/context/AuthContext'
 import { billingCapabilities, type BillingCapabilities } from '@/lib/permissions'
 import ApplyPackage from '@/components/ApplyPackage'
+import MessageCustomer from '@/components/MessageCustomer'
+import { isOffice } from '@/lib/roles'
 import { getJob } from '@/lib/jobs'
 import { recordPayment } from '@/lib/payments'
 import { syncJobToAccounting } from '@/lib/payments'
@@ -119,6 +121,18 @@ export default function JobBillingPage({ params }: { params: Promise<{ id: strin
         </div>
       </div>
 
+      {/* Quote follow-ups and payment chasers live next to the money they're
+          about. The invoice and quote links are filled in by the server. */}
+      {currentTenant && (
+        <MessageCustomer
+          jobId={job.id}
+          tenantId={currentTenant.id}
+          customerPhone={job.customer_phone}
+          customerEmail={job.customer_email}
+          showHistory={isOffice(userRole)}
+        />
+      )}
+
       {/* Packages: the whole point is not re-typing the same five lines on
           every small job. Gated on editPrices because applying one decides
           what the customer is charged; /api/packages/apply checks again. */}
@@ -126,6 +140,7 @@ export default function JobBillingPage({ params }: { params: Promise<{ id: strin
         <ApplyPackage
           tenantId={currentTenant.id}
           jobId={job.id}
+          defaultRatePerHour={Number(currentTenant.default_labour_rate ?? 0)}
           onApplied={async (msg) => { flash(msg); await refresh() }}
         />
       )}

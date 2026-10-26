@@ -234,7 +234,7 @@ const model = existsSync(join(ROOT, 'app/api/assistant/route.ts'))
   ? (readFileSync(join(ROOT, 'app/api/assistant/route.ts'), 'utf-8').match(/model:\s*'([^']+)'/) || [])[1]
   : null
 
-for (const f of ['system_prompt.md', 'fault_finding_manual.md']) {
+for (const f of ['system_prompt.md']) {
   const p = join(ROOT, 'knowledge', 'fault-finder', f)
   if (existsSync(p)) pass(`knowledge/fault-finder/${f}`)
   else fail(`knowledge/fault-finder/${f} is missing`, 'The assistant route reads this at request time.')

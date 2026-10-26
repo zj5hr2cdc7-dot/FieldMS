@@ -33,6 +33,25 @@ const EXPECTED_NO_TENANT = {
   tenants: 'is the tenant',
   tenant_members: 'maps user -> tenant; scoped by user_id',
   profiles: 'one row per auth user; scoped by user_id',
+  stripe_events: 'webhook idempotency ledger; service role only',
+}
+
+/**
+ * Tables that are deliberately RLS-on with NO policies.
+ *
+ * Normally that combination is a mistake worth shouting about, which is why it
+ * is a CRITICAL below. But it is also exactly how you lock a table to the
+ * service role: RLS denies everything by default, the service role bypasses
+ * RLS, so no policy means no client can touch it at all. That is the correct
+ * shape for a webhook ledger.
+ *
+ * "Only the service role writes this" cannot be established by reading the
+ * schema, so it has to be asserted here, with a reason, rather than guessed.
+ * Adding a table to this list is a claim you are making — check that nothing
+ * in the browser reads it before you do.
+ */
+const SERVICE_ROLE_ONLY = {
+  stripe_events: 'Stripe webhook idempotency; written only by /api/stripe/webhook',
 }
 
 const sql = readdirSync(MIGRATIONS)
@@ -163,7 +182,12 @@ for (const t of rows) {
   if (!t.rlsEnabled) {
     findings.push({ sev: 'CRITICAL', table: t.name, issue: 'RLS not enabled — every row readable by any authenticated user' })
   } else if (total === 0) {
-    findings.push({ sev: 'CRITICAL', table: t.name, issue: 'RLS enabled but zero policies — table is unreachable AND unprotected if RLS is ever disabled' })
+    const why = SERVICE_ROLE_ONLY[t.name]
+    findings.push(
+      why
+        ? { sev: 'INFO', table: t.name, issue: `RLS on, no policies — deliberate: ${why}` }
+        : { sev: 'CRITICAL', table: t.name, issue: 'RLS enabled but zero policies — table is unreachable AND unprotected if RLS is ever disabled' }
+    )
   } else {
     // Missing per-command policies: with RLS on, no policy = denied, which is
     // safe but usually means a feature silently fails rather than a hole.

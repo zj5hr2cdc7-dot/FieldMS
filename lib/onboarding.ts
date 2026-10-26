@@ -9,6 +9,7 @@
 
 import { createClient } from '@/utils/supabase/client'
 import { hasElectrical, hasHvac, canUseFaultFinder, type TradeKey } from '@/lib/trades'
+import { FAULT_FINDER_ENABLED } from '@/lib/features'
 
 export { hasElectrical, hasHvac, canUseFaultFinder }
 export type { TradeKey }
@@ -63,6 +64,12 @@ export function moduleGate(trades: string[]): ModuleGate {
   } else {
     gate.navLabelOverrides['/dashboard/assistant'] = 'Fault Finder'
     gate.navLabelOverrides['/field/assistant'] = 'Fault Finder'
+  }
+
+  // Switched off site-wide for now: see lib/features.ts.
+  if (!FAULT_FINDER_ENABLED) {
+    gate.faultFinder = false
+    gate.hiddenNavHrefs = [...new Set([...gate.hiddenNavHrefs, '/dashboard/assistant', '/field/assistant'])]
   }
   return gate
 }

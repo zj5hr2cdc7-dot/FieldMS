@@ -62,7 +62,7 @@ if (!key) {
 
 // ── 2. Knowledge base ────────────────────────────────────────
 const dir = join(root, 'knowledge', 'fault-finder')
-for (const file of ['system_prompt.md', 'fault_finding_manual.md']) {
+for (const file of ['system_prompt.md']) {
   const p = join(dir, file)
   if (!existsSync(p)) {
     fail(`knowledge/fault-finder/${file} is missing`, 'The API route reads this at request time.')

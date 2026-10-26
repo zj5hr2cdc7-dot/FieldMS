@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { useAuthContext } from '@/context/AuthContext'
 import { canUseFaultFinder, getTradesCached } from '@/lib/onboarding'
+import { FAULT_FINDER_ENABLED } from '@/lib/features'
 
 interface Message { role: 'user' | 'assistant'; content: string }
 
@@ -121,5 +122,7 @@ function FaultFinderInner() {
 }
 
 export default function FieldFaultFinder() {
+  // Switched off site-wide for now: see lib/features.ts.
+  if (!FAULT_FINDER_ENABLED) return <p className="py-16 text-center text-sm text-slate-500">Fault Finder is switched off for now.</p>
   return <Suspense fallback={<p className="py-10 text-center text-slate-400">Loading…</p>}><FaultFinderInner /></Suspense>
 }
