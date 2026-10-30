@@ -272,6 +272,90 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── JOB COSTING ──
+          Its own band rather than a sixth tile in the grid above. The grid is
+          five cards because that is exactly what fills three columns beside
+          the large card; a sixth leaves an orphan on a fourth row. This also
+          happens to be the thing ServiceM8 and Tradify make you leave to the
+          accountant, so burying it as one tile of six undersells it.
+
+          Every claim here is true of what is built. It does NOT say costing is
+          automatic: labour needs cost rates set, and the product tells you
+          when a figure is incomplete rather than guessing. Saying so is the
+          selling point, not a caveat to hide. */}
+      <section id="costing" className="scroll-mt-20 py-20 sm:py-28">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-widest text-brand-dark">Know your numbers</p>
+            <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
+              Which jobs actually made money?
+            </h2>
+            <p className="mt-4 text-lg leading-8 text-slate-600">
+              Most sparkies find out months later, if at all. Every job in FieldMS shows what you quoted against what
+              it really cost: labour from timesheets, materials from your own prices, and the subcontractor, plant
+              hire and tip run that usually get forgotten.
+            </p>
+            <ul className="mt-6 space-y-3 text-slate-700">
+              {[
+                'Jobs that came in under your target margin',
+                'Hours that ran over what you quoted',
+                'Work you have finished but not invoiced yet',
+                'Suppliers who billed above the purchase order',
+              ].map((item) => (
+                <li key={item} className="flex gap-3">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+                  <span className="leading-7">{item}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-6 text-sm leading-6 text-slate-500">
+              And when something is missing, it says so instead of guessing. Hours with no cost rate are left out and
+              flagged, because a margin built on half the costs is worse than no margin at all.
+            </p>
+          </div>
+
+          {/* Illustrative figures, not a customer's real job. */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-baseline justify-between">
+              <p className="text-sm font-bold text-slate-900">Switchboard upgrade</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Quoted vs actual</p>
+            </div>
+            <table className="mt-4 w-full text-sm">
+              <tbody>
+                {[
+                  ['Total cost', '$6,130', '$6,888', 'over'],
+                  ['Hours', '46.5', '58.5', 'over'],
+                  ['Revenue ex GST', '$9,650', '$9,650', 'same'],
+                ].map(([label, quoted, actual, tone]) => (
+                  <tr key={label} className="border-b border-slate-100 last:border-0">
+                    <td className="py-2.5 text-slate-600">{label}</td>
+                    <td className="py-2.5 text-right tabular-nums text-slate-400">{quoted}</td>
+                    <td
+                      className={`py-2.5 text-right font-semibold tabular-nums ${
+                        tone === 'over' ? 'text-red-600' : 'text-slate-900'
+                      }`}
+                    >
+                      {actual}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="mt-5 rounded-xl bg-ink p-5 text-white">
+              <p className="text-xs font-semibold uppercase tracking-wide text-white/60">Gross profit on this job</p>
+              <p className="mt-1 text-3xl font-black">
+                $2,762<span className="ml-2 text-base font-semibold text-white/60">28.6%</span>
+              </p>
+              <p className="mt-1 text-xs text-white/60">Quoted at 36.5%</p>
+            </div>
+            <p className="mt-3 text-xs leading-5 text-slate-400">
+              Gross profit on the job. Not your net profit, and not your bank balance. FieldMS says which is which
+              rather than letting you mistake one for the other.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* ── HOW IT WORKS: numbered steps ── */}
       <section id="how" className="scroll-mt-20 bg-slate-50 py-20 sm:py-28">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">

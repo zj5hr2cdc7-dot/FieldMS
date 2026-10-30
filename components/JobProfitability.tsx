@@ -58,7 +58,15 @@ export default function JobProfitability({
       setData(await getJobCostBreakdown(tenantId, jobId, { isOffice }))
       setError(null)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not load job costs')
+      const raw = e instanceof Error ? e.message : ''
+      // Postgres says "relation ... does not exist" when migration 035 has not
+      // been run. That is a setup step, not a bug, and a raw Postgres string
+      // helps nobody — especially now the landing page advertises this.
+      setError(
+        /relation .* does not exist|could not find the table/i.test(raw)
+          ? 'Job costing is not set up on this database yet. Run migration 035_job_costing.sql in Supabase.'
+          : raw || 'Could not load job costs'
+      )
     } finally {
       setLoading(false)
     }
