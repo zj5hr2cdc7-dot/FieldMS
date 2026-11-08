@@ -45,6 +45,7 @@ import {
   DEFAULT_BRANDING,
 } from '@/lib/branding'
 import Logo from '@/components/Logo'
+import { formatAbn, isValidAbn } from '@/lib/business'
 
 type Screen = 'welcome' | OnboardingStep | 'done'
 
@@ -322,7 +323,30 @@ export default function OnboardingWizard() {
               </div>
               <div>
                 <label className="label" htmlFor="ob-abn">ABN <span className="font-normal text-slate-400">(optional)</span></label>
-                <input id="ob-abn" className="input" value={abn} onChange={(e) => setAbn(e.target.value)} placeholder="11 222 333 444" />
+                <input
+                  id="ob-abn"
+                  className="input"
+                  value={abn}
+                  onChange={(e) => setAbn(e.target.value)}
+                  // Reformat to the spaced groups people recognise, but only
+                  // once they have finished typing, so it does not fight them
+                  // mid-entry.
+                  onBlur={() => setAbn((v) => (v.trim() ? formatAbn(v) : v))}
+                  placeholder="11 222 333 444"
+                  aria-invalid={abn.trim() !== '' && !isValidAbn(abn)}
+                />
+                {/*
+                  Warn, do not block. The ATO checksum catches a transposed
+                  digit, which would otherwise end up printed on this
+                  business's quotes, invoices and compliance certificates. But
+                  the field is optional and a false negative must not trap
+                  someone in onboarding.
+                */}
+                {abn.trim() !== '' && !isValidAbn(abn) && (
+                  <p className="mt-1 text-xs text-amber-600">
+                    That does not look like a valid ABN. Check for a typo. You can still continue.
+                  </p>
+                )}
               </div>
               <div>
                 <label className="label" htmlFor="ob-phone">Business phone</label>

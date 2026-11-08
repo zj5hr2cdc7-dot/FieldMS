@@ -26,6 +26,7 @@ import MarketingNav from '@/components/marketing/MarketingNav'
 import { PLAN_CARDS, GST_LABEL, GST_REGISTERED } from '@/lib/plans-public'
 import SignedInRedirect from '@/components/marketing/SignedInRedirect'
 import { FAULT_FINDER_ENABLED, ACCOUNTING_SYNC_ENABLED, CUSTOMER_PAYMENTS_ENABLED } from '@/lib/features'
+import { ABN, LEGAL_ENTITY } from '@/lib/business'
 
 export const metadata: Metadata = {
   // The homepage is the canonical root. Without this, the apex and www
@@ -527,7 +528,14 @@ export default function Home() {
             <Link href="/privacy" className="transition-colors hover:text-slate-700">Privacy</Link>
             <Link href="/terms" className="transition-colors hover:text-slate-700">Terms</Link>
           </div>
-          <p>© {new Date().getFullYear()} FieldMS</p>
+          {/* A real ABN is a small trust signal, and it is what an Australian
+              business is expected to show. It also matters here because the
+              contracting entity is a sole trader, not a company, so the
+              customer should be able to see who they are dealing with. */}
+          <p className="text-center sm:text-right">
+            © {new Date().getFullYear()} {LEGAL_ENTITY}
+            <span className="block text-xs text-slate-400">ABN {ABN}</span>
+          </p>
         </div>
       </footer>
     </div>

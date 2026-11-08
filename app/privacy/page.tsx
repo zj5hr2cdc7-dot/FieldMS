@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Logo from '@/components/Logo'
 import { LEGAL_LAST_UPDATED, LegalShell, REVIEW_NOTICE } from '@/components/LegalShell'
+import { ABN, JURISDICTION, LEGAL_ENTITY } from '@/lib/business'
 
 /*
  * ── WHAT THIS IS, AND WHAT IT IS NOT ───────────────────────────────────────
@@ -32,9 +33,10 @@ export default function PrivacyPage() {
 
       <h2>Who we are</h2>
       <p>
-        FieldMS is job management software for Australian electrical contractors, operated from
-        Queensland, Australia. You can reach us at{' '}
-        <a href="mailto:jack.gapes@outlook.com">jack.gapes@outlook.com</a>.
+        FieldMS is job management software for Australian electrical contractors. It is operated by{' '}
+        <strong>{LEGAL_ENTITY}</strong>, ABN {ABN}, a sole trader in {JURISDICTION}. You can reach us at{' '}
+        <a href="mailto:jack.gapes@outlook.com">jack.gapes@outlook.com</a>, which goes to a person
+        rather than a support queue.
       </p>
 
       <h2>The two kinds of information here</h2>

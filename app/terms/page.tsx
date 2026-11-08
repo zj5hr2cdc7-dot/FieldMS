@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { LEGAL_LAST_UPDATED, LegalShell, REVIEW_NOTICE } from '@/components/LegalShell'
 import { PLAN_CARDS, GST_LABEL, GST_REGISTERED } from '@/lib/plans-public'
+import { ABN, JURISDICTION, LEGAL_ENTITY } from '@/lib/business'
 
 /*
  * ── READ BEFORE EDITING ────────────────────────────────────────────────────
@@ -38,8 +39,14 @@ export default function TermsPage() {
 
       <h2>1. Who these terms are between</h2>
       <p>
-        These terms are between FieldMS and the business that opens an account. If you are agreeing
-        on behalf of a company, you are confirming you are allowed to.
+        These terms are between you and <strong>{LEGAL_ENTITY}</strong>, ABN {ABN}, a sole trader
+        based in {JURISDICTION}. &ldquo;FieldMS&rdquo;,
+        &ldquo;we&rdquo; and &ldquo;us&rdquo; below mean that entity. If you are agreeing on behalf
+        of a company, you are confirming you are allowed to.
+      </p>
+      <p>
+        FieldMS is a registered business name, not a company. If the business is later incorporated,
+        we will tell account holders before these terms transfer to the new entity.
       </p>
       <p>
         FieldMS is sold to businesses, not consumers. That does not remove the Australian Consumer
