@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/utils/supabase/admin'
+import { captureBaselineSafely, captureQuoteBaseline } from '@/lib/job-costing-server'
 
 async function getEstimateByToken(token: string) {
   const admin = createAdminClient()
@@ -123,6 +124,18 @@ export async function POST(
       amount: total,
       meta: { estimate_id: estimate.id, via: 'customer_portal' },
     })
+
+    // Freeze what the job was quoted at, now, before anyone edits a billing
+    // line. Without this the Profitability tab has nothing to compare the
+    // actuals against. Never allowed to fail the approval.
+    await captureBaselineSafely('quote', () =>
+      captureQuoteBaseline(admin, {
+        tenantId: estimate.business_id,
+        jobId: estimate.job_id as string,
+        estimateId: estimate.id,
+        revenueExGst: quoteExGst,
+      })
+    )
   }
 
   return NextResponse.json({ ok: true, status: updates.status })

@@ -36,6 +36,27 @@ import type {
 } from '@/types/billing'
 
 type Tab = 'dashboard' | 'profitability' | 'variations' | 'invoices' | 'payments' | 'timeline'
+/**
+ * Freeze the quoted position for a variation the office just approved.
+ *
+ * job_cost_baselines has no INSERT policy on purpose, so the browser cannot
+ * write one even as the owner: the server re-checks the caller and the
+ * service role does the write. Failure is logged and swallowed because an
+ * approval must not be undone by a reporting side effect, and a missing
+ * baseline shows up visibly on the Profitability tab.
+ */
+async function captureVariationBaseline(jobId: string, variationId: string): Promise<void> {
+  try {
+    await fetch(`/api/jobs/${jobId}/cost-baseline`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ variationId }),
+    })
+  } catch (err) {
+    console.error('Could not capture the variation cost baseline:', err)
+  }
+}
+
 const money = (n: number | null | undefined) => (n === null || n === undefined ? '—' : `A$${n.toFixed(2)}`)
 
 const VARIATION_COLORS: Record<VariationStatus, string> = {
@@ -361,7 +382,7 @@ function VariationsTab({ variations, caps, tenantId, jobId, userId, actorName, o
           <div className="mt-3 flex flex-wrap gap-2">
             {v.status === 'pending' && caps.approveVariations && (
               <>
-                <button type="button" onClick={async () => { await updateVariationStatus(v, 'approved', actorName); await onChange() }} className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark">Approve</button>
+                <button type="button" onClick={async () => { await updateVariationStatus(v, 'approved', actorName); await captureVariationBaseline(jobId, v.id); await onChange() }} className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark">Approve</button>
                 <button type="button" onClick={async () => { await updateVariationStatus(v, 'rejected', actorName); await onChange() }} className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50">Reject</button>
               </>
             )}

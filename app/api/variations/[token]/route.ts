@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/utils/supabase/admin'
+import { captureBaselineSafely, captureVariationBaseline } from '@/lib/job-costing-server'
 
 async function getVariationByToken(token: string) {
   const admin = createAdminClient()
@@ -87,6 +88,12 @@ export async function POST(
     amount: Number(variation.total_ex_gst),
     meta: { variation_number: variation.variation_number, via: 'customer_portal' },
   })
+
+  // An approved variation adds to the quoted position, so it gets its own
+  // baseline row. Baselines are summed, not replaced.
+  if (action === 'approve') {
+    await captureBaselineSafely('variation', () => captureVariationBaseline(admin, variation))
+  }
 
   return NextResponse.json({ ok: true, status })
 }
