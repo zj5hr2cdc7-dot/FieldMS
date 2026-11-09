@@ -59,14 +59,14 @@ It is `main` plus four commits from `feature/next`:
 The job-profit commit from `feature/next` was left out on purpose. The
 job costing now on `main` replaces it.
 
-**Before merging, apply `036_sample_data.sql`.** It was numbered 034 on
+**`036_sample_data.sql` is applied to production (9 November, verified:
+`is_sample` on customers, jobs and estimates, plus all three indexes).** It was numbered 034 on
 the feature branch, which collides with `034_sms_quota.sql`, so it was
 renumbered. It adds an `is_sample` column to customers, jobs and
-estimates. Safe to re-run. Without it, the sample-job card errors.
+estimates. Safe to re-run.
 
-Type-check passes and lint is clean on the changed files. A full
-production build has **not** been run here, because this machine cannot
-reach the npm registry. The Vercel preview on this branch is that check.
+Type-check passes and lint is clean on the changed files. The Vercel preview of this branch builds and shows Ready, so it is
+clear to merge.
 
 ## 1. Migrations — DONE
 
