@@ -1,47 +1,68 @@
 # Go-live runbook
 
-Do these in order. Steps 1–5 are about an afternoon. Nothing here needs code
-written — it all needs an account I cannot sign into.
-
-The branch `feature/payments` is pushed and has 15 commits on it. Vercel builds
-it as a **preview**, not production: only `main` deploys to fieldms.com.au.
-Step 6 is the merge, and it is last on purpose.
-
 ---
 
-## 0. Status, 26 October
+## 0. Status, 9 November
 
-Done: migrations 028 and 034 are applied to production, the five
-`demo1234` logins are banned, and the branch is pushed and building green
-on `field-ms` (the project that owns fieldms.com.au).
+**The database is ready. The code is not deployed.**
 
-Still to do, in order: **migration 029**, then the merge, then steps 2–7
-below.
+Done and verified against production, not assumed:
 
-Two things changed since this file was written:
+- Migrations 028, 029, 034 and 035 are all applied. 035 verified by
+  catalogue query: three tables with RLS on and one policy each, four
+  columns present.
+- The five `demo1234` logins are banned.
+- PR #1 merged on 26 October, so `main` carries the security hardening.
+- The legal entity is named on /terms, /privacy and the footer:
+  Jack Steven Gapes t/a FieldMS, ABN 15 236 755 732, verified against
+  the ABR. The register also confirms **not registered for GST**, so
+  `GST_REGISTERED = false` in lib/plans-public.ts is correct.
 
-- **Migration 029 was added** and must be run. See step 1.
-- **The `fieldms` Vercel project is a stale duplicate.** It was created
-  6 September, holds only `fieldms.vercel.app`, and its last production
-  deploy is "Initial commit". It shows red on the pull request and that
-  red is meaningless. `field-ms` is the real project: it holds
-  `fieldms.com.au`, `www.fieldms.com.au` and `field-ms-iota.vercel.app`.
-  Worth deleting `fieldms` so the next red mark means something.
+### THE ONE THAT MATTERS
 
-## 1. Run the migrations
+**Seven commits are sitting unpushed on `main`, and one of them is the
+Next.js 16.4.3 upgrade.** Production is still on 16.3.5, which has an
+unauthenticated remote code execution hole in the image optimization
+API (GHSA-2464-fhr4-w9xw). The landing page serves `/_next/image`, so
+the vulnerable path is public. This has been true since 27 October.
 
-Supabase → SQL editor → paste each file whole and run. **Run the whole file in
-one go** rather than selecting statements — some older migrations contain DO
-blocks that break if split (that is what broke migration 027).
+Nothing else on this list comes close. Push first.
 
-| File | Without it |
+I cannot do it: the sandbox has no GitHub credentials, and GitHub
+Desktop sits on another macOS Space that a window cannot be moved out
+of while the current Space is a full-screen app. Drop out of full
+screen and it is one click.
+
+### Also worth knowing
+
+- **The `fieldms` Vercel project is a stale duplicate** from 6 September
+  holding only `fieldms.vercel.app`. It shows red and that red is
+  meaningless. `field-ms` is the real project. Worth deleting the
+  duplicate so the next red mark means something.
+- **Vercel env vars went from 19 to 10** between 27 October and
+  8 November. `CRON_SECRET`, `XERO_*` and `MYOB_*` are gone. Dropping
+  Xero and MYOB is reasonable since both are flagged off, but without
+  `CRON_SECRET` the scheduled price refresh cannot run at all. It fails
+  closed, so nothing breaks; it just never happens.
+- **Still no `STRIPE_*` variables.** Nobody can pay. This is the actual
+  answer to "what is left before launch".
+
+## 1. Migrations — DONE
+
+All four are applied to production and verified. Kept here as the record of
+what the schema depends on:
+
+| File | What it carries |
 |---|---|
-| `supabase/migrations/028_job_packages.sql` | The Packages screen errors |
-| `supabase/migrations/034_sms_quota.sql` | The SMS allowance lookup errors |
-| `supabase/migrations/029_customer_messaging.sql` | **Not yet run.** The Messages screen errors, and the automatic review request on job completion logs an error and gives up |
+| `028_job_packages.sql` | The Packages screen |
+| `029_customer_messaging.sql` | Messages, templates, automatic review requests |
+| `034_sms_quota.sql` | The SMS allowance lookup |
+| `035_job_costing.sql` | Cost rates, other direct costs, quoted baselines |
 
-Both have been checked against the real Postgres parser and are safe to paste
-in one piece. Both are safe to re-run.
+All four are plain statements with no DO blocks, checked against the real
+Postgres parser, and safe to re-run. If you rebuild from scratch, run them in
+filename order and note that `public.jobs` still has no baseline, so step 2
+below is a prerequisite for a clean rebuild.
 
 ## 2. Baseline `public.jobs`
 
