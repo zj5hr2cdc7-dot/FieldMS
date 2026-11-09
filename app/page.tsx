@@ -207,7 +207,7 @@ export default function Home() {
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-10 gap-y-2 px-4 text-sm font-medium text-slate-400 sm:px-6">
           <span>Built with sparkies across Australia</span>
           <span className="hidden sm:inline">·</span>
-          <span>AS/NZS 3000 aware</span>
+          <span>Australian test sheets built in</span>
           <span className="hidden sm:inline">·</span>
           <span>Works in switchrooms</span>
           <span className="hidden sm:inline">·</span>

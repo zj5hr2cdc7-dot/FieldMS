@@ -27,7 +27,6 @@ export const metadata: Metadata = {
     "electrical contractor software Australia",
     "field service management software",
     "electrical test sheet software",
-    "AS/NZS 3000 compliance software",
     "tradie app Australia",
   ],
   // Explicit, because the default when Google sees no directive is a guess.
