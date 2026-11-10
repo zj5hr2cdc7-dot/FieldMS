@@ -47,6 +47,27 @@ screen and it is one click.
 - **Still no `STRIPE_*` variables.** Nobody can pay. This is the actual
   answer to "what is left before launch".
 
+## 0a. The `release/launch` branch, 9 November
+
+Built in a separate copy because another session was editing `main`.
+It is `main` plus four commits from `feature/next`:
+
+- Sample job for new workspaces (removable in one click)
+- Offline: photos, form answers, signatures and test sheets save with no signal
+- Finish job on site: test results, certificate, invoice, complete
+
+The job-profit commit from `feature/next` was left out on purpose. The
+job costing now on `main` replaces it.
+
+**`036_sample_data.sql` is applied to production (9 November, verified:
+`is_sample` on customers, jobs and estimates, plus all three indexes).** It was numbered 034 on
+the feature branch, which collides with `034_sms_quota.sql`, so it was
+renumbered. It adds an `is_sample` column to customers, jobs and
+estimates. Safe to re-run.
+
+Type-check passes and lint is clean on the changed files. The Vercel preview of this branch builds and shows Ready, so it is
+clear to merge.
+
 ## 1. Migrations — DONE
 
 All four are applied to production and verified. Kept here as the record of

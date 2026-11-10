@@ -14,6 +14,7 @@ import {
   certificateUrl,
 } from '@/lib/testsheets'
 import type { Job, JobTestSheet, TestSheetCircuit } from '@/types/database'
+import { saveTestSheetOfflineAware, isOnline } from '@/lib/offline-queue'
 
 export default function TestSheetsPage() {
   const { currentTenant, session } = useAuthContext()
@@ -28,6 +29,12 @@ export default function TestSheetsPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+
+  // Opened from "Finish job" or a job link: preselect that job.
+  useEffect(() => {
+    const fromLink = new URLSearchParams(window.location.search).get('job')
+    if (fromLink) queueMicrotask(() => setSelectedJobId(fromLink))
+  }, [])
 
   useEffect(() => {
     if (!currentTenant) return
@@ -81,7 +88,8 @@ export default function TestSheetsPage() {
     if (!sheet) return
     setSaving(true); setError(null); setSuccess(null)
     try {
-      const saved = await updateTestSheet(sheet.id, {
+      // Saves on the phone if there's no signal and syncs later.
+      const { queued } = await saveTestSheetOfflineAware(sheet.id, {
         installation_address: sheet.installation_address,
         switchboard_location: sheet.switchboard_location,
         supply_type: sheet.supply_type,
@@ -91,8 +99,7 @@ export default function TestSheetsPage() {
         test_date: sheet.test_date,
         notes: sheet.notes,
       })
-      setSheet(saved)
-      setSuccess('Test sheet saved.')
+      setSuccess(queued ? 'Saved on this device. It will sync when you have signal.' : 'Test sheet saved.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save.')
     } finally {
@@ -102,6 +109,12 @@ export default function TestSheetsPage() {
 
   const handleComplete = async () => {
     if (!sheet) return
+    // Issuing a certificate number needs the server, so save locally and wait.
+    if (!isOnline()) {
+      await handleSave()
+      setError('You are offline. Your results are saved; issue the certificate once you have signal.')
+      return
+    }
     setSaving(true); setError(null); setSuccess(null)
     try {
       // Persist latest edits first so the certificate reflects what's on screen
@@ -190,6 +203,9 @@ export default function TestSheetsPage() {
               <div>
                 <p className="font-semibold text-green-800">Certificate {sheet.certificate_number} issued</p>
                 <p className="text-sm text-green-700 mt-0.5">This sheet is locked. Share the certificate link with your customer.</p>
+                <a href={`/dashboard/finish/${sheet.job_id}`} className="mt-2 inline-block text-sm font-semibold text-green-800 underline">
+                  Next: send it and invoice the job →
+                </a>
               </div>
               <div className="flex gap-2">
                 <button type="button" onClick={copyLink} className="rounded-lg border border-green-300 bg-white px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-100 transition-colors">

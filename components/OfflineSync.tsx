@@ -12,6 +12,7 @@ export default function OfflineSync() {
   const [offline, setOffline] = useState(false)
   const [pending, setPending] = useState(0)
   const [justSynced, setJustSynced] = useState(0)
+  const [rejected, setRejected] = useState<string[]>([])
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -33,8 +34,10 @@ export default function OfflineSync() {
     }, 0)
 
     const flush = async () => {
-      const synced = await flushQueue()
+      const { synced, failed } = await flushQueue()
       setPending(pendingCount())
+      if (failed.length) setRejected(failed)
+      if (synced > 0) window.dispatchEvent(new Event('fieldms-synced'))
       if (synced > 0) {
         setJustSynced(synced)
         window.setTimeout(() => setJustSynced(0), 4000)
@@ -62,6 +65,15 @@ export default function OfflineSync() {
       window.removeEventListener('fieldms-queued', handleQueued)
     }
   }, [])
+
+  if (rejected.length && !offline) {
+    return (
+      <div className="fixed bottom-0 inset-x-0 z-50 flex items-center justify-center gap-3 bg-red-600 px-4 py-2.5 text-center text-sm font-medium text-white">
+        <span>Back online, but {rejected.join(', ')} could not be saved. Please check and redo {rejected.length > 1 ? 'them' : 'it'}.</span>
+        <button type="button" onClick={() => setRejected([])} className="rounded border border-white/60 px-2 py-0.5 text-xs">OK</button>
+      </div>
+    )
+  }
 
   if (!offline && pending === 0 && justSynced === 0) return null
 

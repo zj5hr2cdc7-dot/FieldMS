@@ -17,7 +17,7 @@ const HIGHLIGHTS: [string, string][] = [
   ['Your crew, in sync', 'Schedules, timesheets and job updates from the field.'],
 ]
 
-const TRUST = ['Works in switchrooms', 'AS/NZS 3000 aware', 'Built in Australia']
+const TRUST = ['Works in switchrooms', 'Australian test sheets built in', 'Built in Australia']
 
 export default function LoginPage() {
   const router = useRouter()

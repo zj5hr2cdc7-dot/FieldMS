@@ -26,8 +26,21 @@
  * one from users' browsers.
  */
 
-const CACHE_NAME = 'fieldms-v3'
-const APP_SHELL = ['/', '/dashboard', '/dashboard/jobs', '/dashboard/schedule', '/manifest.json']
+const CACHE_NAME = 'fieldms-v4'
+// Field screens are included so a tech who has opened the app once can still
+// open them in a switchroom with no signal (v4).
+const APP_SHELL = [
+  '/',
+  '/dashboard',
+  '/dashboard/jobs',
+  '/dashboard/schedule',
+  '/dashboard/test-sheets',
+  '/field',
+  '/field/jobs',
+  '/field/photos',
+  '/field/forms',
+  '/manifest.json',
+]
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

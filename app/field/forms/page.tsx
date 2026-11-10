@@ -7,10 +7,11 @@ import { getMyJobs } from '@/lib/field'
 import { getJob } from '@/lib/jobs'
 import {
   getTemplates, getSubmissions, getSubmission, createSubmission, saveSubmissionData,
-  completeSubmission, addSignature, getSignatures,
+  completeSubmission, getSignatures,
 } from '@/lib/forms'
 import FormRenderer from '@/components/FormRenderer'
 import SignaturePad from '@/components/SignaturePad'
+import { saveFormOfflineAware, addSignatureOfflineAware, isOnline } from '@/lib/offline-queue'
 import type { FormFieldValue, FormSignature, FormSubmission, FormTemplate, SignatureRole } from '@/types/forms'
 import type { Job } from '@/types/database'
 
@@ -151,13 +152,22 @@ function FieldFill({ submission, onBack }: { submission: FormSubmission; onBack:
 
   const save = async () => {
     setBusy(true); setMsg(null)
-    try { await saveSubmissionData(submission.id, data); setMsg('Saved.') }
+    try {
+      const { queued } = await saveFormOfflineAware(submission.id, data)
+      setMsg(queued ? 'Saved on this phone. It will sync when you have signal.' : 'Saved.')
+    }
     catch (e) { setMsg(e instanceof Error ? e.message : 'Failed') } finally { setBusy(false) }
   }
 
   const complete = async () => {
     const missing = sigFields.filter((f) => f.signatureRole && !signedRoles.has(f.signatureRole))
     if (missing.length) { setMsg(`Signatures needed: ${missing.map((f) => ROLE_LABELS[f.signatureRole!]).join(', ')}`); return }
+    // Completing issues a document number, which needs the server.
+    if (!isOnline()) {
+      const { queued } = await saveFormOfflineAware(submission.id, data)
+      setMsg(`${queued ? 'Answers saved on this phone. ' : ''}You can complete the form once you have signal.`)
+      return
+    }
     setBusy(true); setMsg(null)
     try {
       const saved = await saveSubmissionData(submission.id, data)
@@ -216,9 +226,29 @@ function FieldFill({ submission, onBack }: { submission: FormSubmission; onBack:
                   onClick={async () => {
                     setBusy(true)
                     try {
-                      const sig = await addSignature(submission.id, submission.tenant_id, signingRole, signerName.trim(), sigData!)
-                      setSignatures((prev) => [...prev.filter((s) => s.role !== signingRole), sig])
+                      const name = signerName.trim()
+                      const { queued } = await addSignatureOfflineAware({
+                        submissionId: submission.id,
+                        tenantId: submission.tenant_id,
+                        role: signingRole,
+                        signerName: name,
+                        signatureData: sigData!,
+                      })
+                      // Show it straight away; when it was queued it syncs later.
+                      const local = {
+                        id: `pending-${signingRole}`,
+                        submission_id: submission.id,
+                        tenant_id: submission.tenant_id,
+                        role: signingRole,
+                        signer_name: queued ? `${name} (waiting to sync)` : name,
+                        signature_data: sigData!,
+                        signed_at: new Date().toISOString(),
+                      } as unknown as FormSignature
+                      setSignatures((prev) => [...prev.filter((s) => s.role !== signingRole), local])
+                      if (!queued) getSignatures(submission.id).then(setSignatures).catch(() => {})
                       setSigningRole(null)
+                    } catch (e) {
+                      setMsg(e instanceof Error ? e.message : 'Could not save the signature')
                     } finally { setBusy(false) }
                   }}
                   className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Save</button>

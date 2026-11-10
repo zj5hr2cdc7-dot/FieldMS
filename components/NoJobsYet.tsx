@@ -1,4 +1,10 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
+import { useAuthContext } from '@/context/AuthContext'
+import { isOffice } from '@/lib/roles'
+import { createSampleJob } from '@/lib/sample-job'
 
 /**
  * Empty state for pages that hang off a job.
@@ -18,6 +24,25 @@ export default function NoJobsYet({
   /** One line on why a job is needed first. */
   why: string
 }) {
+  const { currentTenant, session, userRole } = useAuthContext()
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  // Office staff can drop in the sample job and come straight back here,
+  // which is quicker than inventing a customer just to look around.
+  const addSample = async () => {
+    if (!currentTenant || !session?.user) return
+    setBusy(true)
+    setError('')
+    try {
+      await createSampleJob(currentTenant.id, session.user.id)
+      window.location.reload()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not add the sample job')
+      setBusy(false)
+    }
+  }
+
   return (
     <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm">
@@ -38,9 +63,17 @@ export default function NoJobsYet({
       <p className="mx-auto mt-1.5 max-w-md text-sm leading-6 text-slate-500">
         {why} Create a job first, then come back and the {thing} will attach to it.
       </p>
-      <Link href="/dashboard/jobs" className="btn btn-primary mt-6 inline-block">
-        Create a job
-      </Link>
+      <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <Link href="/dashboard/jobs" className="btn btn-primary inline-block">
+          Create a job
+        </Link>
+        {isOffice(userRole) && (
+          <button type="button" onClick={addSample} disabled={busy} className="btn btn-ghost">
+            {busy ? 'Adding…' : 'Use a sample job'}
+          </button>
+        )}
+      </div>
+      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
     </div>
   )
 }
