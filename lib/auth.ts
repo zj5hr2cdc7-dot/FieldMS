@@ -355,37 +355,8 @@ export async function verifyRecoveryCode(email: string, code: string): Promise<v
   if (error) throw error
 }
 
-/**
- * Turn an auth error into something a human can act on.
- *
- * The common failure in development is not a wrong password: it is that the
- * Supabase project is unreachable (paused on the free tier, deleted, or the
- * URL in .env.local is wrong). supabase-js surfaces that as a bare
- * "Failed to fetch", which looks like a bug in the login form. Name it.
- */
-export function describeAuthError(err: unknown, fallback: string): string {
-  const message = err instanceof Error ? err.message : ''
+// describeAuthError now lives in lib/auth-errors.ts, which has no imports so
+// it can be unit tested without a Supabase client. Re-exported so every
+// existing `from '@/lib/auth'` import keeps working.
+export { describeAuthError } from '@/lib/auth-errors'
 
-  if (/failed to fetch|networkerror|load failed/i.test(message)) {
-    return 'Cannot reach the FieldMS server. Check your connection, and if you are running locally check that the Supabase project is awake and NEXT_PUBLIC_SUPABASE_URL is correct.'
-  }
-  if (/invalid login credentials/i.test(message)) {
-    return 'That email and password do not match an account.'
-  }
-  if (/email not confirmed/i.test(message)) {
-    return 'Confirm your email address first. Check your inbox for the verification link.'
-  }
-  if (/same as the old password|should be different/i.test(message)) {
-    return 'That is the password you already have. Choose a different one.'
-  }
-  if (/otp_expired|expired/i.test(message)) {
-    return 'That code or link has expired. Request a new one.'
-  }
-  if (/invalid.*(token|code|otp)|token.*(invalid|not found)/i.test(message)) {
-    return 'That code is not right. Check the email and try again.'
-  }
-  if (/rate limit|too many/i.test(message)) {
-    return 'Too many attempts. Wait a minute and try again.'
-  }
-  return message || fallback
-}
