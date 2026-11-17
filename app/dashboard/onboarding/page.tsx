@@ -46,6 +46,7 @@ import {
 } from '@/lib/branding'
 import Logo from '@/components/Logo'
 import { formatAbn, isValidAbn } from '@/lib/business'
+import { ACCOUNTING_SYNC_ENABLED } from '@/lib/features'
 
 type Screen = 'welcome' | OnboardingStep | 'done'
 
@@ -118,6 +119,11 @@ export default function OnboardingWizard() {
   useEffect(() => {
     if (!tenantId) return
     setBizName(currentTenant?.name ?? '')
+    // These live on the tenant row, not in onboarding state, so without this
+    // re-running setup showed them blank and saving again wiped them.
+    setPhone(currentTenant?.phone ?? '')
+    setAbn(currentTenant?.abn ?? '')
+    setWebsite(currentTenant?.website ?? '')
     getOnboarding(tenantId)
       .then((state) => {
         if (!state) return
@@ -187,7 +193,11 @@ export default function OnboardingWizard() {
         const next = await markStepDone(tenantId, step, completedSteps)
         setCompletedSteps(next)
         const idx = STEP_ORDER.indexOf(step)
-        setScreen(idx + 1 < STEP_ORDER.length ? STEP_ORDER[idx + 1] : 'done')
+        const following = idx + 1 < STEP_ORDER.length ? STEP_ORDER[idx + 1] : 'done'
+        // 'tour' has no screen of its own: the Done screen offers the tour and
+        // finish() marks it complete. Going to 'tour' rendered a blank page at
+        // 86% with no way forward, which is where every new owner ended up.
+        setScreen(following === 'tour' ? 'done' : following)
       } catch (err) {
         // Supabase rejects with a plain object, not an Error, so the previous
         // instanceof check swallowed every database message and showed a
@@ -558,7 +568,7 @@ export default function OnboardingWizard() {
               <div className="mt-1 overflow-hidden rounded-xl border border-slate-200">
                 <div className="flex items-center justify-between px-5 py-3" style={{ backgroundColor: brand.secondary_color }}>
                   <span className="text-sm font-bold text-white">{bizName || 'Your business'}</span>
-                  <span className="text-xs text-white/70">Tax Invoice</span>
+                  <span className="text-xs text-white/70">{gst ? 'Tax Invoice' : 'Invoice'}</span>
                 </div>
                 <div className="bg-white px-5 py-4">
                   <p className="text-sm font-semibold" style={{ color: brand.secondary_color }}>Switchboard upgrade</p>
@@ -639,7 +649,11 @@ export default function OnboardingWizard() {
       {screen === 'integrations' && (
         <div className="card p-6 sm:p-8">
           <h2 className="text-2xl font-black tracking-tight text-slate-900">Do you use accounting software?</h2>
-          <p className="mt-2 text-sm text-slate-500">FieldMS syncs invoices and payments with Xero and MYOB.</p>
+          <p className="mt-2 text-sm text-slate-500">
+            {ACCOUNTING_SYNC_ENABLED
+              ? 'FieldMS syncs invoices and payments with Xero and MYOB.'
+              : 'Tell us what you use. Xero and MYOB sync is on the way, and we will let you know when it is ready.'}
+          </p>
           <div className="mt-8 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             {ACCOUNTING.map((a) => (
               <button
@@ -655,8 +669,9 @@ export default function OnboardingWizard() {
             ))}
           </div>
           <p className="mt-6 rounded-lg bg-slate-50 p-4 text-sm leading-6 text-slate-500">
-            Choosing Xero or MYOB here saves the choice. You finish the actual connection from this page once
-            setup is done, and it takes about a minute. Everything else keeps working either way.
+            {ACCOUNTING_SYNC_ENABLED
+              ? 'Choosing Xero or MYOB here saves the choice. You finish the actual connection from this page once setup is done, and it takes about a minute. Everything else keeps working either way.'
+              : 'This just saves your answer. Nothing connects yet, and everything else in FieldMS works without it.'}
           </p>
           <WizardNav
             saving={saving}
