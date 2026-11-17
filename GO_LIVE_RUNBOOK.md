@@ -2,6 +2,15 @@
 
 ---
 
+## 00. Keys rotated, 12 November
+
+Supabase moved to the new key format. SUPABASE_SERVICE_ROLE_KEY now holds the `vercel` secret key (sb_secret_) and NEXT_PUBLIC_SUPABASE_ANON_KEY holds the default publishable key (sb_publishable_). The five STRIPE_* test variables are in Vercel. This commit exists to trigger the production deploy that picks them up.
+
+Still to do: confirm the live site works on the new keys, then disable the legacy API keys in Supabase (Settings, API Keys, Legacy API keys). Never re-enable them. The STRIPE_* variables were imported as Config, not Secret; re-add them as Secret once Vercel two-factor is recovered.
+
+---
+
+
 ## 0. Status, 9 November
 
 **The database is ready. The code is not deployed.**
