@@ -12,19 +12,24 @@ import { isOffice, homeFor } from '@/lib/roles'
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
-  const { session, loading, userRole, currentTenant } = useAuthContext()
+  const { session, loading, userRole, currentTenant, tenants } = useAuthContext()
 
   useEffect(() => {
     if (loading) return
     if (!session) {
       router.push('/login')
+    } else if (tenants.length === 0) {
+      // Signed in, member of nothing: the workspace was never created.
+      // Send them to name it rather than bouncing to the field app, which
+      // would wait forever for a tenant.
+      router.replace('/setup-workspace')
     } else if (!isOffice(userRole)) {
       // Technicians get the field app, not the management portal. The
       // database enforces the same split: migration 024 makes invoices,
       // costs and the customer book unreadable to them regardless of route.
       router.replace(homeFor(userRole))
     }
-  }, [session, loading, userRole, router])
+  }, [session, loading, userRole, tenants.length, router])
 
   // Setup is mandatory. Until a workspace is marked completed, every dashboard
   // route bounces the owner back to the wizard: no jobs, no billing, no

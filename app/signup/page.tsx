@@ -8,7 +8,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthShell, { AuthHeading, Eyebrow, Icon, check } from '@/components/AuthShell'
-import { signUpWithEmail, createTenant, describeAuthError } from '@/lib/auth'
+import { signUpWithEmail, describeAuthError } from '@/lib/auth'
 
 // "Accounting sync — connect Xero or MYOB" was here. Neither integration is
 // built; the credentials are not even set. It was removed from the homepage in
@@ -19,7 +19,7 @@ const HIGHLIGHTS: [string, string][] = [
   ['Compliance against the job', 'Test sheets and certificates filed with the work, not in a folder.'],
 ]
 
-const TRUST = ['Free during early access', 'No card required', 'Built in Australia']
+const TRUST = ['Flat monthly price', 'No lock-in contract', 'Built in Australia']
 
 export default function SignupPage() {
   const router = useRouter()
@@ -32,24 +32,28 @@ export default function SignupPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (loading) return
     setError('')
     setLoading(true)
 
     try {
-      const { user } = await signUpWithEmail(email, password, fullName)
+      // The workspace is created by the database alongside the user
+      // (migration 037), so success here means the whole account exists.
+      const { user, session } = await signUpWithEmail(email, password, fullName, tenantName)
 
       if (!user) {
         throw new Error('Failed to create user')
       }
 
-      const slug = tenantName.toLowerCase().replace(/\s+/g, '-')
-      await createTenant(user.id, tenantName, slug)
-      router.push('/verify-email')
+      // Signed straight in (email confirmation off): go to the app. Otherwise
+      // they confirm first. Either way, leave the button disabled so a second
+      // click cannot fire a second signup and get "already registered".
+      router.replace(session ? '/dashboard' : '/verify-email')
+      return
     } catch (err: unknown) {
       setError(describeAuthError(err, 'Signup failed'))
-    } finally {
-      setLoading(false)
     }
+    setLoading(false)
   }
 
   const aside = (
@@ -57,7 +61,7 @@ export default function SignupPage() {
       <Eyebrow>Get started</Eyebrow>
       <AuthHeading lead="Create your FieldMS" accent="workspace" />
       <p className="mt-6 max-w-md text-lg leading-8 text-slate-600">
-        Quoting, scheduling, invoicing and compliance in one platform. Free during early access, no card required.
+        Quoting, scheduling, invoicing and compliance in one platform. One flat monthly price for your whole crew, no lock-in contract.
       </p>
       <ul className="mt-10 space-y-4">
         {HIGHLIGHTS.map(([title, body]) => (

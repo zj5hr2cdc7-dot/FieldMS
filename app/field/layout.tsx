@@ -20,12 +20,18 @@ import FieldNav from '@/components/FieldNav'
 export default function FieldLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
-  const { session, loading, currentTenant, userRole } = useAuthContext()
+  const { session, loading, currentTenant, userRole, tenants } = useAuthContext()
   const role = normaliseRole(userRole)
+  // Signed in but a member of nothing: an account whose workspace was never
+  // created. Without this the field home waits on a tenant that will never
+  // arrive and shows "Loading your day..." forever.
+  const noWorkspace = !loading && !!session && tenants.length === 0
 
   useEffect(() => {
-    if (!loading && !session) router.push('/login')
-  }, [session, loading, router])
+    if (loading) return
+    if (!session) router.push('/login')
+    else if (noWorkspace) router.replace('/setup-workspace')
+  }, [session, loading, noWorkspace, router])
 
   if (loading) {
     return (
@@ -37,7 +43,7 @@ export default function FieldLayout({ children }: { children: React.ReactNode })
       </div>
     )
   }
-  if (!session) return null
+  if (!session || noWorkspace) return null
 
   const title = pathname === '/field' ? `Hi, ${(session.profile?.full_name || 'there').split(' ')[0]}` : null
 

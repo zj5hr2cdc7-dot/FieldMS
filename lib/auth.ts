@@ -49,16 +49,21 @@ export async function getCurrentSessionClient(): Promise<AuthSession | null> {
 export async function signUpWithEmail(
   email: string,
   password: string,
-  fullName: string
+  fullName: string,
+  workspaceName?: string
 ) {
   const supabase = createClient()
 
+  // workspace_name is read by the handle_new_user() trigger (migration 037),
+  // which creates the workspace and owner membership in the SAME transaction
+  // as the user. There is no second step for the browser to drop.
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: {
         full_name: fullName,
+        ...(workspaceName?.trim() ? { workspace_name: workspaceName.trim() } : {}),
       },
     },
   })
