@@ -103,6 +103,9 @@ export async function createTestSheet(
       job_id: jobId,
       tested_by: userId,
       circuits: [emptyCircuit()],
+      // The column defaults to CURRENT_DATE, which is UTC: before 10am in
+      // Queensland it stamped the certificate with yesterday's date.
+      test_date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Australia/Brisbane' }).format(new Date()),
       ...fields,
     })
     .select()

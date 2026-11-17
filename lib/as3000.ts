@@ -1,4 +1,7 @@
-'use client'
+// Plain data and pure functions, deliberately NOT 'use client'.
+// app/api/certificates/[token]/route.ts calls getAS3000ClauseForJob on the
+// server; with the client directive Next.js 16 throws at runtime, so every
+// public certificate link returned 500 and showed "Certificate not found".
 
 export interface As3000Clause {
   id: string
