@@ -186,7 +186,7 @@ export default function CustomersPage() {
               </p>
             </div>
           ) : (
-            <div className="card mt-6 overflow-hidden">
+            <div className="card mt-6 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-400">
                   <tr>
@@ -285,7 +285,7 @@ export default function CustomersPage() {
               </p>
             </div>
           ) : (
-            <div className="card mt-6 overflow-hidden">
+            <div className="card mt-6 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-400">
                   <tr>

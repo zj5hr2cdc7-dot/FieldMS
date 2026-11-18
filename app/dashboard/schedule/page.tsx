@@ -141,7 +141,7 @@ export default function SchedulePage() {
       </div>
 
       {/* Stat row */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
           { label: 'Total jobs', value: jobs.length, color: 'text-slate-900' },
           { label: 'Assigned', value: jobs.filter((j) => j.assigned_to).length, color: 'text-brand-dark' },

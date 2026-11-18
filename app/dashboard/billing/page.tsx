@@ -350,8 +350,8 @@ export default function DashboardBillingPage() {
           {/* Materials on the job sheet (live pricing) */}
           <div className="mt-6 space-y-4">
             {materialLines.length > 0 && (
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-x-auto">
+                <div className="px-5 py-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-1">
                   <h3 className="text-sm font-semibold text-slate-900">Materials ({materialLines.length})</h3>
                   <span className="text-xs text-slate-400">Marked up {markupPercent}% · sell prices shown</span>
                 </div>
