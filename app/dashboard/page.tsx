@@ -100,7 +100,7 @@ export default function DashboardPage() {
           <p className="text-slate-500 mt-1 text-sm">Here&apos;s what&apos;s on today.</p>
         </div>
         <Link
-          href="/dashboard/jobs"
+          href="/dashboard/jobs?new=1"
           className="inline-flex items-center gap-2 rounded-lg bg-brand hover:bg-brand-dark px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
@@ -292,7 +292,7 @@ export default function DashboardPage() {
           </div>
           <h3 className="font-semibold text-slate-900">No active jobs</h3>
           <p className="text-slate-500 text-sm mt-1">Create a job to get started.</p>
-          <Link href="/dashboard/jobs" className="mt-5 inline-flex items-center gap-2 rounded-lg bg-brand hover:bg-brand-dark px-4 py-2.5 text-sm font-semibold text-white transition-colors">
+          <Link href="/dashboard/jobs?new=1" className="mt-5 inline-flex items-center gap-2 rounded-lg bg-brand hover:bg-brand-dark px-4 py-2.5 text-sm font-semibold text-white transition-colors">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
             New job
           </Link>

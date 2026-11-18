@@ -61,7 +61,12 @@ export default function PublicInvoicePage({ params }: { params: Promise<{ token:
   const businessName = branding?.trading_name || business?.name || ''
   const balance = Math.max(0, inv.total_inc_gst - inv.amount_paid)
   const isPaid = inv.status === 'paid'
-  const kindLabel = inv.kind === 'tax' ? 'Tax Invoice' : `${inv.kind.charAt(0).toUpperCase()}${inv.kind.slice(1)} Invoice`
+  // Only a GST-registered business may issue a tax invoice. When no GST was
+  // charged this is an ordinary invoice, and must not say otherwise.
+  const chargesGst = Number(inv.gst_amount) > 0
+  const kindLabel = inv.kind === 'tax'
+    ? (chargesGst ? 'Tax Invoice' : 'Invoice')
+    : `${inv.kind.charAt(0).toUpperCase()}${inv.kind.slice(1)} Invoice`
 
   return (
     <div className="min-h-screen bg-slate-100 py-8 print:bg-white print:py-0" style={{ fontFamily: brand.font }}>
@@ -127,10 +132,10 @@ export default function PublicInvoicePage({ params }: { params: Promise<{ token:
           {/* Totals */}
           <div className="mt-5 ml-auto max-w-xs space-y-1.5 text-sm">
             {inv.discount > 0 && <Row label="Discount" value={`-${money(inv.discount)}`} />}
-            <Row label="Subtotal (ex GST)" value={money(inv.subtotal_ex_gst)} />
-            <Row label="GST" value={money(inv.gst_amount)} />
+            {chargesGst && <Row label="Subtotal (ex GST)" value={money(inv.subtotal_ex_gst)} />}
+            {chargesGst && <Row label="GST" value={money(inv.gst_amount)} />}
             <div className="flex items-center justify-between border-t border-slate-200 pt-2 text-base font-bold text-slate-900">
-              <span>Total (inc GST)</span><span>{money(inv.total_inc_gst)}</span>
+              <span>{chargesGst ? 'Total (inc GST)' : 'Total'}</span><span>{money(inv.total_inc_gst)}</span>
             </div>
             {inv.amount_paid > 0 && <Row label="Paid" value={`-${money(inv.amount_paid)}`} />}
             {balance > 0 && (

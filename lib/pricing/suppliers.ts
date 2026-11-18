@@ -30,6 +30,7 @@ export interface WholesalerInfo {
 }
 
 export const WHOLESALERS: WholesalerInfo[] = [
+  { key: 'reece', name: 'Reece', trade: 'electrical', methods: ['catalogue', 'browser'], website: 'https://www.reece.com.au', monogram: 'RC', color: '#003057', supportsTradeAccounts: true, supportsPurchaseOrders: true },
   { key: 'cnw', name: 'CNW', trade: 'electrical', methods: ['catalogue', 'browser'], website: 'https://www.cnw.com.au', monogram: 'CN', color: '#0057a8', supportsTradeAccounts: true, supportsPurchaseOrders: true },
   { key: 'tradezone', name: 'Tradezone', trade: 'electrical', methods: ['catalogue', 'browser'], website: 'https://www.tradezone.com.au', monogram: 'TZ', color: '#e87722', supportsTradeAccounts: true, supportsPurchaseOrders: true },
   { key: 'middys', name: "Middy's", trade: 'electrical', methods: ['api', 'catalogue', 'browser'], website: 'https://www.middys.com.au', monogram: 'MD', color: '#c8102e', supportsTradeAccounts: true, supportsPurchaseOrders: true },

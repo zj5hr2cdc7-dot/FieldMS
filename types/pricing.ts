@@ -1,6 +1,7 @@
 // ── Live Material Pricing engine types ──────────────────────────────────────
 
 export type SupplierKey =
+  | 'reece'
   | 'rexel'
   | 'haymans'
   | 'lawrence_hanson'

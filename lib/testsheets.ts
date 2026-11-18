@@ -96,12 +96,20 @@ export async function createTestSheet(
   fields: Partial<Pick<JobTestSheet, 'installation_address' | 'switchboard_location' | 'supply_type'>>
 ): Promise<JobTestSheet> {
   const supabase = createClient()
+  // Prefill who tested and their licence: the licence was entered once at
+  // setup (branding) and then had to be retyped on every sheet.
+  const [{ data: profile }, { data: branding }] = await Promise.all([
+    supabase.from('profiles').select('full_name').eq('id', userId).maybeSingle(),
+    supabase.from('tenant_branding').select('electrical_license').eq('tenant_id', tenantId).maybeSingle(),
+  ])
   const { data, error } = await supabase
     .from('job_test_sheets')
     .insert({
       tenant_id: tenantId,
       job_id: jobId,
       tested_by: userId,
+      tester_name: profile?.full_name ?? null,
+      tester_license: branding?.electrical_license ?? null,
       circuits: [emptyCircuit()],
       // The column defaults to CURRENT_DATE, which is UTC: before 10am in
       // Queensland it stamped the certificate with yesterday's date.

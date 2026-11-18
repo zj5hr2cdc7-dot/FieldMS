@@ -40,6 +40,8 @@ export default function EstimateDetailPage({ params }: { params: Promise<{ id: s
   const [savingStatus, setSavingStatus] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [emailTo, setEmailTo] = useState('')
+  const [emailing, setEmailing] = useState(false)
   const [publicToken, setPublicToken] = useState<string | null>(null)
   const [depositPercent, setDepositPercent] = useState(0)
   const [approvedAt, setApprovedAt] = useState<string | null>(null)
@@ -60,6 +62,7 @@ export default function EstimateDetailPage({ params }: { params: Promise<{ id: s
       try {
         const estimate = await getEstimateWithItems(estimateId, currentTenant.id)
         setEstimateData(estimate)
+        setEmailTo((v) => v || estimate?.customer_email || '')
         setCustomerName(estimate.customer_name)
         setStatus(estimate.status)
         setTotal(estimate.total)
@@ -313,6 +316,48 @@ export default function EstimateDetailPage({ params }: { params: Promise<{ id: s
               Customers see a deposit of A${((total * depositPercent) / 100).toFixed(2)} ({depositPercent}%) when approving.
             </p>
           )}
+
+          {/* Email it. Copying the link and pasting it into your own email was
+              the only way to send a quote. */}
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-end">
+            <div className="flex-1">
+              <label className="block text-sm text-slate-600 mb-1">Customer email</label>
+              <input
+                type="email"
+                value={emailTo}
+                onChange={(e) => setEmailTo(e.target.value)}
+                placeholder="customer@example.com"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-brand"
+              />
+            </div>
+            <button
+              type="button"
+              disabled={emailing || !publicToken || !emailTo.trim()}
+              onClick={async () => {
+                setEmailing(true)
+                setError(null)
+                setSuccess(null)
+                try {
+                  const res = await fetch('/api/send-to-customer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'quote', id: estimateId, email: emailTo.trim() }),
+                  })
+                  const json = await res.json().catch(() => ({}))
+                  if (!res.ok) throw new Error(json.error || 'Could not send the quote.')
+                  if (status === 'draft') setStatus('sent')
+                  setSuccess(json.message || 'Quote emailed.')
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : 'Could not send the quote.')
+                } finally {
+                  setEmailing(false)
+                }
+              }}
+              className="rounded-lg bg-ink px-4 py-2.5 text-sm font-semibold text-white hover:bg-ink-light transition-colors disabled:opacity-50"
+            >
+              {emailing ? 'Sending…' : 'Email quote'}
+            </button>
+          </div>
         </div>
 
         {/* Job link — connect the quote to a job so approval seeds billing */}

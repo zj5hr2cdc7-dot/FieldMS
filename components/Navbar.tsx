@@ -17,6 +17,9 @@ const primaryLinks = [
   { label: 'Today', href: '/dashboard', tour: 'nav-dashboard' },
   { label: 'Schedule', href: '/dashboard/schedule', tour: 'nav-schedule' },
   { label: 'Jobs', href: '/dashboard/jobs', tour: 'nav-jobs' },
+  // Customer quotes live at /estimates. They had no menu entry at all, so a
+  // new owner could not find how to send a quote.
+  { label: 'Quotes', href: '/estimates', tour: 'nav-quotes' },
   { label: 'Customers', href: '/dashboard/customers', tour: 'nav-customers' },
   { label: 'Money', href: '/dashboard/billing', tour: 'nav-billing' },
 ]

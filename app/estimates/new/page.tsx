@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuthContext } from '@/context/AuthContext'
 import { createEstimate, NewEstimateItem } from '@/lib/estimate'
+import { getJob } from '@/lib/jobs'
 import MaterialPicker, { type PickedMaterial } from '@/components/MaterialPicker'
 
 type LineItem = NewEstimateItem & { id: string }
@@ -23,6 +24,10 @@ export default function NewEstimatePage() {
   const router = useRouter()
   const { session, currentTenant, loading } = useAuthContext()
   const [customerName, setCustomerName] = useState('')
+  const [customerEmail, setCustomerEmail] = useState('')
+  const [customerPhone, setCustomerPhone] = useState('')
+  const [jobId, setJobId] = useState<string | null>(null)
+  const [jobTitle, setJobTitle] = useState<string | null>(null)
   const [lineItems, setLineItems] = useState<LineItem[]>([createEmptyItem()])
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -31,6 +36,24 @@ export default function NewEstimatePage() {
   useEffect(() => {
     if (!loading && !session) router.push('/login')
   }, [loading, session, router])
+
+  // Started from a job's Quote button (?job=<id>): prefill the customer and
+  // link the quote to that job. Read from location rather than
+  // useSearchParams so the page needs no Suspense boundary.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('job')
+    if (!id) return
+    getJob(id)
+      .then((job) => {
+        if (!job) return
+        setJobId(job.id)
+        setJobTitle(job.title)
+        setCustomerName((v) => v || job.customer_name || '')
+        setCustomerEmail((v) => v || job.customer_email || '')
+        setCustomerPhone((v) => v || job.customer_phone || '')
+      })
+      .catch(() => {})
+  }, [])
 
   const total = useMemo(
     () => lineItems.reduce((sum, item) => sum + item.quantity * item.unit_price, 0),
@@ -101,15 +124,18 @@ export default function NewEstimatePage() {
 
     try {
       setSubmitting(true)
-      await createEstimate(currentTenant.id, customerName.trim(), total, validItems)
-      setMessage('Estimate created successfully.')
-      setCustomerName('')
-      setLineItems([createEmptyItem()])
+      const created = await createEstimate(currentTenant.id, customerName.trim(), total, validItems, {
+        jobId,
+        customerEmail,
+        customerPhone,
+      })
+      // Open the saved quote: that is where it is emailed or its link copied.
+      router.push(`/estimates/${created.id}`)
+      return
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save estimate.')
-    } finally {
-      setSubmitting(false)
+      setError(err instanceof Error ? err.message : 'Failed to save quote.')
     }
+    setSubmitting(false)
   }
 
   return (
@@ -118,10 +144,10 @@ export default function NewEstimatePage() {
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <Link href="/estimates" className="text-sm text-slate-500 hover:text-slate-700 transition-colors">
-          ← Estimates
+          ← Quotes
         </Link>
         <span className="text-slate-300">/</span>
-        <h1 className="text-3xl font-bold text-slate-900">New estimate</h1>
+        <h1 className="text-3xl font-bold text-slate-900">New quote</h1>
       </div>
 
       {message && (
@@ -135,6 +161,11 @@ export default function NewEstimatePage() {
 
         {/* Customer */}
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          {jobTitle && (
+            <p className="mb-3 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
+              For job: <span className="font-semibold text-slate-900">{jobTitle}</span>. Approving this quote fills in that job.
+            </p>
+          )}
           <label className="block text-sm font-semibold text-slate-700 mb-2">Customer name *</label>
           <input
             value={customerName}
@@ -142,6 +173,16 @@ export default function NewEstimatePage() {
             placeholder="Acme Corp"
             className={inputCls}
           />
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Customer email</label>
+              <input type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="customer@example.com" className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Customer phone</label>
+              <input type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="04xx xxx xxx" className={inputCls} />
+            </div>
+          </div>
         </div>
 
         {/* Line items */}

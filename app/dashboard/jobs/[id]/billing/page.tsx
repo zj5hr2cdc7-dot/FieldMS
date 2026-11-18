@@ -10,6 +10,7 @@ import MessageCustomer from '@/components/MessageCustomer'
 import JobProfitability from '@/components/JobProfitability'
 import { isOffice } from '@/lib/roles'
 import { getJob } from '@/lib/jobs'
+import { getApprovedQuoteItemsForJob } from '@/lib/estimate'
 import { recordPayment } from '@/lib/payments'
 import { syncJobToAccounting } from '@/lib/payments'
 import {
@@ -291,7 +292,8 @@ function DashboardTab({ job, f, caps, onSaved, flash }: { job: Job; f: JobFinanc
             try {
               await updateJobBillingSettings(job.id, {
                 quote_total: parseFloat(quoteTotal) || 0,
-                gst_rate: parseFloat(gstRate) || 10,
+                // `|| 10` turned a deliberate 0 (not GST registered) back into 10.
+                gst_rate: Number.isFinite(parseFloat(gstRate)) ? parseFloat(gstRate) : 10,
                 po_number: po || undefined,
               })
               await onSaved()
@@ -424,7 +426,24 @@ function InvoicesTab({ invoices, financials, caps, tenantId, jobId, userId, acto
         const outstandingExGst = Math.max(0, financials.jobValueExGst - (financials.totalPaid / (1 + gstRate / 100)))
         items = [{ description: 'Final claim — balance of works', quantity: 1, unitPrice: outstandingExGst }]
       } else {
-        items = [{ description: 'Electrical works as per job', quantity: 1, unitPrice: financials.jobValueExGst }]
+        // Itemise from the approved quote, so the customer's invoice matches
+        // what they approved instead of one line reading "Electrical works as
+        // per job". Quote prices include GST when GST applies; invoice lines
+        // are ex GST. Falls back to one line if the quote no longer adds up to
+        // the job value (quoted value edited by hand since approval).
+        const quoteItems = await getApprovedQuoteItemsForJob(jobId).catch(() => [])
+        const factor = 1 + gstRate / 100
+        const itemised = quoteItems.map((q) => ({
+          description: q.name,
+          quantity: q.quantity,
+          unitPrice: Math.round((q.unit_price / factor) * 100) / 100,
+        }))
+        const variations = financials.approvedVariationsExGst
+        if (variations > 0) itemised.push({ description: 'Approved variations', quantity: 1, unitPrice: variations })
+        const itemisedTotal = itemised.reduce((s, i) => s + i.quantity * i.unitPrice, 0)
+        items = quoteItems.length > 0 && Math.abs(itemisedTotal - financials.jobValueExGst) < 0.05 * Math.max(1, quoteItems.length)
+          ? itemised
+          : [{ description: 'Electrical works as per job', quantity: 1, unitPrice: financials.jobValueExGst }]
       }
       await createInvoice({
         tenantId, jobId, userId, actorName, kind, items, gstRate,
@@ -468,7 +487,7 @@ function InvoicesTab({ invoices, financials, caps, tenantId, jobId, userId, acto
               <select value={kind} onChange={(e) => setKind(e.target.value as InvoiceKind)} className={inputCls}>
                 <option value="deposit">Deposit invoice (10%)</option>
                 <option value="progress">Progress claim</option>
-                <option value="tax">Tax invoice (full value)</option>
+                <option value="tax">{gstRate > 0 ? 'Tax invoice (full value)' : 'Invoice (full value)'}</option>
                 <option value="final">Final invoice (balance)</option>
                 <option value="credit">Credit note</option>
               </select>
@@ -478,7 +497,11 @@ function InvoicesTab({ invoices, financials, caps, tenantId, jobId, userId, acto
             )}
             <div><label className="block text-sm text-slate-600 mb-1">Due date</label><input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={inputCls} /></div>
           </div>
-          <p className="text-xs text-slate-400">GST {gstRate}% applied automatically. Job value ex GST: {money(financials.jobValueExGst)}.</p>
+          <p className="text-xs text-slate-400">
+            {gstRate > 0
+              ? <>GST {gstRate}% applied automatically. Job value ex GST: {money(financials.jobValueExGst)}.</>
+              : <>No GST: this business is not registered for GST. Job value: {money(financials.jobValueExGst)}.</>}
+          </p>
           <button type="button" disabled={busy} onClick={createFor} className="rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-50">
             {busy ? 'Creating…' : 'Create invoice'}
           </button>
@@ -503,6 +526,29 @@ function InvoicesTab({ invoices, financials, caps, tenantId, jobId, userId, acto
           <div className="mt-3 flex flex-wrap gap-2">
             {inv.status === 'draft' && (
               <button type="button" onClick={async () => { await updateInvoiceStatus(inv, 'sent', actorName); await onChange() }} className="rounded-lg bg-ink px-3 py-1.5 text-xs font-semibold text-white hover:bg-ink-light">Mark sent</button>
+            )}
+            {invoiceShareUrl(inv) && inv.status !== 'void' && (
+              <button
+                type="button"
+                onClick={async () => {
+                  const res = await fetch('/api/send-to-customer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'invoice', id: inv.id }),
+                  })
+                  const json = await res.json().catch(() => ({}))
+                  if (!res.ok) {
+                    setError(json.needsEmail
+                      ? 'This job has no customer email. Add it on the job, then email the invoice.'
+                      : (json.error || 'Could not email the invoice.'))
+                    return
+                  }
+                  await onChange()
+                }}
+                className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
+              >
+                Email to customer
+              </button>
             )}
             {invoiceShareUrl(inv) && (
               <button type="button" onClick={async () => { await navigator.clipboard.writeText(invoiceShareUrl(inv)!) }} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">Copy link</button>

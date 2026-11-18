@@ -167,7 +167,7 @@ export default function PlanPage() {
                 <div className="rounded-lg border border-brand/40 bg-brand/5 p-4">
                   <p className="font-semibold text-slate-900">Founding member</p>
                   <p className="mt-1 text-2xl font-black text-slate-900">$69<span className="text-sm font-medium text-slate-500">/month</span></p>
-                  <p className="mt-1 text-xs text-slate-500">Locked in for 24 months for early customers.</p>
+                  <p className="mt-1 text-xs text-slate-500">For the first businesses on board. This rate stays yours for as long as you keep the plan.</p>
                   <button className={`${primaryBtn} mt-3 w-full`} disabled={busy !== null} onClick={() => go('founding', () => startCheckout(currentTenant.id, 'founding'))}>
                     {busy === 'founding' ? 'Opening…' : 'Subscribe'}
                   </button>
@@ -175,7 +175,7 @@ export default function PlanPage() {
                 <div className="rounded-lg border border-slate-200 p-4">
                   <p className="font-semibold text-slate-900">Standard</p>
                   <p className="mt-1 text-2xl font-black text-slate-900">$99<span className="text-sm font-medium text-slate-500">/month</span></p>
-                  <p className="mt-1 text-xs text-slate-500">Up to 5 users.</p>
+                  <p className="mt-1 text-xs text-slate-500">The ongoing rate once early access closes. Your whole crew, no per-user charge.</p>
                   <button className={`${secondaryBtn} mt-3 w-full`} disabled={busy !== null} onClick={() => go('standard', () => startCheckout(currentTenant.id, 'standard'))}>
                     {busy === 'standard' ? 'Opening…' : 'Subscribe'}
                   </button>

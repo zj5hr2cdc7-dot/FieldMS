@@ -15,7 +15,7 @@ interface QuoteData {
     created_at: string
     items: { id: string; name: string; quantity: number; unit_price: number; total: number }[]
   }
-  business: { name: string; logo_url: string | null; abn: string | null; phone: string | null; website: string | null } | null
+  business: { name: string; logo_url: string | null; abn: string | null; phone: string | null; website: string | null; gst_registered?: boolean | null } | null
 }
 
 function currency(value: number) {
@@ -123,7 +123,9 @@ export default function PublicQuotePage({ params }: { params: Promise<{ token: s
         {/* Totals */}
         <div className="bg-slate-50 border border-slate-200 px-6 sm:px-8 py-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Total (inc. GST)</p>
+            <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+              {business?.gst_registered === false ? 'Total' : 'Total (inc. GST)'}
+            </p>
             <p className="text-3xl font-bold text-slate-900">{currency(quote.total)}</p>
           </div>
           {quote.deposit_percent > 0 && (

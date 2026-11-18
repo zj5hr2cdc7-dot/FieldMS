@@ -119,15 +119,27 @@ export async function convertEstimateToJob(
   const { createJob } = await import('@/lib/jobs')
   const supabase = createClient()
 
-  // Quote total is inc-GST; seed the job's quoted value ex GST (10% GST assumed).
-  const quoteExGst = Math.round((estimate.total / 1.1) * 100) / 100
+  // Line items become the job description, so the crew sees what was sold.
+  const { data: items } = await supabase
+    .from('estimate_items')
+    .select('name, quantity')
+    .eq('estimate_id', estimate.id)
+  const description = (items ?? []).map((i) => `${i.quantity} x ${i.name}`).join('\n') || undefined
 
   const job = await createJob(tenantId, userId, {
     title: `${estimate.customer_name} — quoted work`,
     customer_name: estimate.customer_name,
     customer_email: estimate.customer_email ?? undefined,
     customer_phone: estimate.customer_phone ?? undefined,
+    description,
   })
+
+  // The quote total is what the customer pays. The job's gst_rate is 0 for a
+  // business not registered for GST (migration 038), in which case the
+  // quoted value IS the total; dividing by 1.1 regardless under-recorded it.
+  const { data: created } = await supabase.from('jobs').select('gst_rate').eq('id', job.id).maybeSingle()
+  const rate = Number(created?.gst_rate ?? 10)
+  const quoteExGst = Math.round((estimate.total / (1 + rate / 100)) * 100) / 100
 
   await supabase.from('jobs').update({ quote_total: quoteExGst }).eq('id', job.id)
   await supabase.from('estimates').update({ job_id: job.id }).eq('id', estimate.id).eq('business_id', tenantId)
@@ -149,7 +161,8 @@ export async function createEstimate(
   businessId: string,
   customerName: string,
   total: number,
-  items: NewEstimateItem[]
+  items: NewEstimateItem[],
+  extras: { jobId?: string | null; customerEmail?: string | null; customerPhone?: string | null } = {}
 ): Promise<Estimate> {
   const supabase = createClient()
 
@@ -160,6 +173,11 @@ export async function createEstimate(
       customer_name: customerName,
       status: 'draft',
       total,
+      // A quote started from a job is linked to it from the start, so
+      // approving it fills in THAT job instead of creating a duplicate.
+      job_id: extras.jobId || null,
+      customer_email: extras.customerEmail?.trim() || null,
+      customer_phone: extras.customerPhone?.trim() || null,
     })
     .select()
     .single()
@@ -179,4 +197,27 @@ export async function createEstimate(
   if (itemsError) throw itemsError
 
   return estimate as Estimate
+}
+
+/**
+ * Line items of the job's approved quote, for a full-value invoice.
+ * Returns [] when the job has no approved quote.
+ */
+export async function getApprovedQuoteItemsForJob(
+  jobId: string
+): Promise<{ name: string; quantity: number; unit_price: number }[]> {
+  const supabase = createClient()
+  const { data } = await supabase
+    .from('estimates')
+    .select('id, approved_at, estimate_items(name, quantity, unit_price)')
+    .eq('job_id', jobId)
+    .eq('status', 'accepted')
+    .order('approved_at', { ascending: false })
+    .limit(1)
+  const est = data?.[0] as { estimate_items?: { name: string; quantity: unknown; unit_price: unknown }[] } | undefined
+  return (est?.estimate_items ?? []).map((i) => ({
+    name: i.name,
+    quantity: Number(i.quantity),
+    unit_price: Number(i.unit_price),
+  }))
 }

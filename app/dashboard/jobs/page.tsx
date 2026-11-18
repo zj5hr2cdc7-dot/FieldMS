@@ -80,7 +80,18 @@ export default function JobsPage() {
     ])
     setJobs(jobsData)
     setMembers(membersData)
+    // A one-person business: default new jobs to them. Left Unassigned they
+    // never appeared in the owner's own field app ("No jobs assigned to you").
+    const me = session?.user?.id
+    if (membersData.length === 1 && me) {
+      setAssignedTo((v) => v || me)
+    }
   }
+
+  // Dashboard "New job" links here with ?new=1: open the form straight away.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('new') === '1') setShowCreate(true)
+  }, [])
 
   useEffect(() => {
     fetchAll().finally(() => setLoading(false))
@@ -434,7 +445,7 @@ export default function JobsPage() {
                     <Link href={`/dashboard/jobs/${job.id}/billing`} className="rounded-lg bg-ink px-3 py-1.5 text-xs font-semibold text-white hover:bg-ink-light transition-colors">
                       Billing
                     </Link>
-                    <Link href={`/dashboard/billing?job=${job.id}`} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+                    <Link href={`/estimates/new?job=${job.id}`} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
                       Quote
                     </Link>
                     <Link href={`/dashboard/forms?job=${job.id}`} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors">

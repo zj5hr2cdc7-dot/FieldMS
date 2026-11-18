@@ -26,7 +26,7 @@ export async function GET(
 
   const { data: business } = await admin
     .from('tenants')
-    .select('name, logo_url, abn, phone, website')
+    .select('name, logo_url, abn, phone, website, gst_registered')
     .eq('id', estimate.business_id)
     .single()
 
@@ -113,7 +113,10 @@ export async function POST(
   // set the quoted value (ex GST) and log it on the job billing timeline.
   if (action === 'approve' && estimate.job_id) {
     const total = Number(estimate.total)
-    const gstRate = 10
+    // The job's own rate: 0 for a business not registered for GST (038).
+    // Hard-coding 10 knocked 9.1% off the quoted value of every such job.
+    const { data: linkedJob } = await admin.from('jobs').select('gst_rate').eq('id', estimate.job_id).maybeSingle()
+    const gstRate = Number(linkedJob?.gst_rate ?? 10)
     const quoteExGst = Math.round((total / (1 + gstRate / 100)) * 100) / 100
     await admin.from('jobs').update({ quote_total: quoteExGst }).eq('id', estimate.job_id)
     await admin.from('billing_audit_events').insert({
