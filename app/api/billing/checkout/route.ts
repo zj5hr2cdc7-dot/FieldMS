@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   const admin = createAdminClient()
   const [{ data: existing }, { data: tenant }, { data: profile }] = await Promise.all([
     admin.from('tenant_subscriptions').select('*').eq('tenant_id', tenantId).maybeSingle(),
-    admin.from('tenants').select('name').eq('id', tenantId).single(),
+    admin.from('tenants').select('name, trial_ends_at').eq('id', tenantId).single(),
     admin.from('profiles').select('email').eq('id', authz.userId).maybeSingle(),
   ])
 
@@ -52,6 +52,12 @@ export async function POST(request: Request) {
       .upsert({ tenant_id: tenantId, stripe_customer_id: customerId }, { onConflict: 'tenant_id' })
   }
 
+  // Choosing a plan mid-trial must not cut the trial short: the first charge
+  // lands when the free 30 days end. Stripe needs a trial end at least 48
+  // hours out, so in the final two days billing simply starts now.
+  const trialEnd = tenant?.trial_ends_at ? Math.floor(new Date(tenant.trial_ends_at).getTime() / 1000) : 0
+  const keepTrial = trialEnd > Math.floor(Date.now() / 1000) + 48 * 3600
+
   const origin = appOrigin(request)
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
@@ -59,7 +65,10 @@ export async function POST(request: Request) {
     line_items: [{ price, quantity: 1 }],
     client_reference_id: tenantId,
     metadata: { tenant_id: tenantId, plan },
-    subscription_data: { metadata: { tenant_id: tenantId, plan } },
+    subscription_data: {
+      metadata: { tenant_id: tenantId, plan },
+      ...(keepTrial ? { trial_end: trialEnd } : {}),
+    },
     allow_promotion_codes: true,
     success_url: `${origin}/dashboard/plan?checkout=success`,
     cancel_url: `${origin}/dashboard/plan?checkout=cancelled`,

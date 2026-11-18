@@ -10,6 +10,8 @@ export type UserRole = 'owner' | 'manager' | 'technician' | 'admin' | 'member'
 
 export interface Tenant {
   id: string
+  /** Migration 040: end of the free trial. Only the service role can move it. */
+  trial_ends_at?: string | null
   name: string
   slug: string
   logo_url: string | null

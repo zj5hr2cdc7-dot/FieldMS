@@ -19,7 +19,7 @@ const HIGHLIGHTS: [string, string][] = [
   ['Compliance against the job', 'Test sheets and certificates filed with the work, not in a folder.'],
 ]
 
-const TRUST = ['Flat monthly price', 'No lock-in contract', 'Built in Australia']
+const TRUST = ['30-day free trial, no card needed', 'No lock-in contract', 'Built in Australia']
 
 export default function SignupPage() {
   const router = useRouter()
@@ -61,7 +61,7 @@ export default function SignupPage() {
       <Eyebrow>Get started</Eyebrow>
       <AuthHeading lead="Create your FieldMS" accent="workspace" />
       <p className="mt-6 max-w-md text-lg leading-8 text-slate-600">
-        Quoting, scheduling, invoicing and compliance in one platform. One flat monthly price for your whole crew, no lock-in contract.
+        Quoting, scheduling, invoicing and compliance in one platform. Free for 30 days, no card needed. Then one flat monthly price for your whole crew, no lock-in contract.
       </p>
       <ul className="mt-10 space-y-4">
         {HIGHLIGHTS.map(([title, body]) => (

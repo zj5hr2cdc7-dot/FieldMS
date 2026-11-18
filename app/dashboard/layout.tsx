@@ -7,7 +7,9 @@ import Navbar from '@/components/Navbar'
 import MobileNav from '@/components/MobileNav'
 import ProductTour from '@/components/ProductTour'
 import { getOnboarding, needsSetup } from '@/lib/onboarding'
-import { isOffice, homeFor } from '@/lib/roles'
+import { isOffice, homeFor, normaliseRole } from '@/lib/roles'
+import { getAccess, type Access } from '@/lib/trial'
+import TrialBanner from '@/components/TrialBanner'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -66,6 +68,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => { cancelled = true }
   }, [loading, session, currentTenant, userRole, pathname, router])
 
+  // Free trial (migration 040). Once it is over with no plan, the owner is
+  // held on the plan page and everyone else sees /trial-ended. Their data is
+  // untouched. A failed check never locks anyone out.
+  const [access, setAccess] = useState<Access | null>(null)
+  useEffect(() => {
+    if (loading || !session || !currentTenant) return
+    let cancelled = false
+    getAccess(currentTenant.id).then((a) => { if (!cancelled) setAccess(a) })
+    return () => { cancelled = true }
+  }, [loading, session, currentTenant])
+
+  const isOwner = normaliseRole(userRole) === 'owner'
+  const trialOver = access?.status === 'expired'
+  useEffect(() => {
+    if (!trialOver) return
+    // An owner who never finished setup finishes it first (the setup gate
+    // sends them there), then lands here; the two never bounce each other.
+    if (isOwner && pathname !== '/dashboard/plan' && pathname !== '/dashboard/onboarding') {
+      router.replace('/dashboard/plan?trial=ended')
+    }
+    else if (!isOwner) router.replace('/trial-ended')
+  }, [trialOver, isOwner, pathname, router])
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-ink text-white">
@@ -95,6 +120,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
+      <TrialBanner access={access} isOwner={isOwner} />
       <main className="min-h-[calc(100vh-4rem)] pb-16 md:pb-0">{children}</main>
       <MobileNav />
       <ProductTour />

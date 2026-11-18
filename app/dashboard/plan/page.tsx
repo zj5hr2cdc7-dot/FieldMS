@@ -14,6 +14,7 @@ import {
   type TenantSubscription,
   type PaymentAccountStatus,
 } from '@/lib/plan'
+import { getAccess, type Access } from '@/lib/trial'
 
 const PLAN_LABELS: Record<string, string> = { founding: 'Founding member', standard: 'Standard' }
 const ACTIVE = ['active', 'trialing', 'past_due']
@@ -35,6 +36,7 @@ export default function PlanPage() {
     plan: string; allowance: number; sent: number; remaining: number; period: string; exhausted: boolean
   } | null>(null)
   const [loading, setLoading] = useState(true)
+  const [access, setAccess] = useState<Access | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState('')
 
@@ -48,6 +50,7 @@ export default function PlanPage() {
       .then((d) => d?.quota && setSms(d.quota))
       .catch(() => {})
 
+    getAccess(currentTenant.id).then((a) => { if (!cancelled) setAccess(a) })
     Promise.all([getSubscription(currentTenant.id), getPaymentAccountStatus(currentTenant.id)])
       .then(([s, p]) => {
         if (cancelled) return
@@ -89,10 +92,16 @@ export default function PlanPage() {
 
       {checkout === 'success' && (
         <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
-          Thanks, you&apos;re subscribed. It can take a few seconds for your plan to show here.
+          Thanks, you&apos;re subscribed. If you still had trial days left, your first charge is on the day the trial ends. It can take a few seconds for your plan to show here.
         </div>
       )}
       {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+      {access?.status === 'expired' && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <span className="font-semibold">Your 30-day free trial has ended.</span> Everything you entered is
+          kept safe. Choose a plan below to pick up where you left off.
+        </div>
+      )}
 
       {/* ── Customer text messages ──
           Shown here rather than buried in settings because it is the one
@@ -163,6 +172,13 @@ export default function PlanPage() {
             <p className="text-sm text-slate-600">
               One price for your whole crew. No lock-in: cancel any time from this page.
             </p>
+            {access?.status === 'trial' && access.trialEndsAt && (
+              <p className="rounded-lg bg-brand/5 p-3 text-sm text-slate-700">
+                You&apos;re on the free trial until{' '}
+                <span className="font-semibold">{new Date(access.trialEndsAt).toLocaleDateString('en-AU')}</span>.
+                Choosing a plan now won&apos;t cut it short: your card is first charged when the trial ends.
+              </p>
+            )}
             {isOwner ? (
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-lg border border-brand/40 bg-brand/5 p-4">

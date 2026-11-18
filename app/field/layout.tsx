@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useAuthContext } from '@/context/AuthContext'
 import { normaliseRole, roleMeta } from '@/lib/roles'
 import FieldNav from '@/components/FieldNav'
+import { getAccess } from '@/lib/trial'
 
 /**
  * Technician (field) app shell. Deliberately minimal and mobile first:
@@ -32,6 +33,20 @@ export default function FieldLayout({ children }: { children: React.ReactNode })
     if (!session) router.push('/login')
     else if (noWorkspace) router.replace('/setup-workspace')
   }, [session, loading, noWorkspace, router])
+
+  // Trial over with no plan: the crew sees the trial-ended screen, the owner
+  // is sent to choose a plan. A failed check never locks anyone out.
+  const [trialOver, setTrialOver] = useState(false)
+  useEffect(() => {
+    if (loading || !session || !currentTenant) return
+    let cancelled = false
+    getAccess(currentTenant.id).then((a) => { if (!cancelled) setTrialOver(a?.status === 'expired') })
+    return () => { cancelled = true }
+  }, [loading, session, currentTenant])
+  useEffect(() => {
+    if (!trialOver) return
+    router.replace(role === 'owner' ? '/dashboard/plan?trial=ended' : '/trial-ended')
+  }, [trialOver, role, router])
 
   if (loading) {
     return (

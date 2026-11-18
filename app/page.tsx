@@ -145,14 +145,14 @@ export default function Home() {
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="/signup" className="rounded-lg bg-brand px-6 py-3.5 text-center text-sm font-semibold text-white shadow-lg shadow-brand/25 transition-colors hover:bg-brand-dark">
-                Get started
+                Start free trial
               </Link>
               <a href="#how" className="rounded-lg border border-slate-300 bg-white px-6 py-3.5 text-center text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50">
                 See how it works
               </a>
             </div>
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-500">
-              {['Your whole crew, one price', 'Cancel any time', 'Built in Australia'].map((t) => (
+              {['30 days free, no card needed', 'Your whole crew, one price', 'Built in Australia'].map((t) => (
                 <span key={t} className="inline-flex items-center gap-1.5"><Icon d={check} className="h-4 w-4 text-brand-dark" /> {t}</span>
               ))}
             </div>
@@ -492,14 +492,14 @@ export default function Home() {
                     : 'border border-slate-300 text-slate-700 hover:bg-slate-50'
                 }`}
               >
-                Get started
+                Start 30-day free trial
               </Link>
             </div>
           ))}
         </div>
 
         <p className="mx-auto mt-8 max-w-2xl text-center text-sm text-slate-500">
-          Cancel any time from your account — no phone call, no retention offer. Your data stays
+          Every plan starts with 30 days free, no card needed. Cancel any time from your account — no phone call, no retention offer. Your data stays
           exportable whether you are a customer or not.
         </p>
       </section>
@@ -509,10 +509,10 @@ export default function Home() {
         <div className="mx-auto max-w-6xl overflow-hidden rounded-2xl bg-gradient-to-br from-brand to-brand-dark px-6 py-14 text-center sm:px-8 sm:py-16">
           <h2 className="text-3xl font-black tracking-tight text-white sm:text-4xl">Give your evenings back.</h2>
           <p className="mx-auto mt-4 max-w-md text-lg text-green-50">
-            One price for the whole crew, cancel any time. Just less admin and more time on the tools.
+            Try it free for 30 days, no card needed. Then one price for the whole crew, cancel any time.
           </p>
           <Link href="/signup" className="mt-8 inline-block rounded-lg bg-white px-7 py-3.5 text-sm font-bold text-brand-dark shadow-lg transition-transform hover:scale-[1.02]">
-            Get started
+            Start free trial
           </Link>
         </div>
       </section>

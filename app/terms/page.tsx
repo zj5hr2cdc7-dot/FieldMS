@@ -161,8 +161,10 @@ export default function TermsPage() {
             : 'FieldMS is not currently registered for GST, so no GST is charged on these prices.'}
         </li>
         <li>
-          <strong>There is no free trial at present.</strong> If we introduce one, its length and
-          what happens at the end will be stated before you are asked for a card.
+          <strong>Free trial.</strong> Every new workspace gets 30 days free, with no card
+          needed. If you choose a plan during the trial, your first charge is on the day the trial
+          ends. If the trial ends without a plan, the workspace is paused, not deleted: your data is
+          kept and everything is available again as soon as you choose a plan.
         </li>
         <li>
           Text message allowances are per calendar month and do not roll over:{' '}
