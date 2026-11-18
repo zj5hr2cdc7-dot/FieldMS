@@ -42,6 +42,7 @@ export default function EstimateDetailPage({ params }: { params: Promise<{ id: s
   const [success, setSuccess] = useState<string | null>(null)
   const [emailTo, setEmailTo] = useState('')
   const [emailing, setEmailing] = useState(false)
+  const [emailMsg, setEmailMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [publicToken, setPublicToken] = useState<string | null>(null)
   const [depositPercent, setDepositPercent] = useState(0)
   const [approvedAt, setApprovedAt] = useState<string | null>(null)
@@ -119,10 +120,10 @@ export default function EstimateDetailPage({ params }: { params: Promise<{ id: s
               onClick={() => router.push('/estimates')}
               className="text-sm font-medium text-brand-dark transition-colors hover:text-brand"
             >
-              ← Back to estimates
+              ← Back to quotes
             </button>
-            <h1 className="mt-3 text-3xl font-semibold text-slate-900">Estimate details</h1>
-            <p className="text-sm text-slate-500">Review estimate information and update status.</p>
+            <h1 className="mt-3 text-3xl font-semibold text-slate-900">Quote details</h1>
+            <p className="text-sm text-slate-500">Review the quote, email it, and follow its status.</p>
           </div>
           <div className="rounded-xl bg-slate-50 px-5 py-4 text-sm text-slate-700">
             Workspace: <span className="font-semibold text-slate-900">{currentTenant?.name || 'Loading...'}</span>
@@ -188,7 +189,7 @@ export default function EstimateDetailPage({ params }: { params: Promise<{ id: s
             <div className="mb-6 flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm uppercase tracking-widest text-slate-500">Line items</p>
-                <h2 className="mt-2 text-xl font-semibold text-slate-900">Estimate items</h2>
+                <h2 className="mt-2 text-xl font-semibold text-slate-900">Quote items</h2>
               </div>
             </div>
 
@@ -335,8 +336,7 @@ export default function EstimateDetailPage({ params }: { params: Promise<{ id: s
               disabled={emailing || !publicToken || !emailTo.trim()}
               onClick={async () => {
                 setEmailing(true)
-                setError(null)
-                setSuccess(null)
+                setEmailMsg(null)
                 try {
                   const res = await fetch('/api/send-to-customer', {
                     method: 'POST',
@@ -346,9 +346,11 @@ export default function EstimateDetailPage({ params }: { params: Promise<{ id: s
                   const json = await res.json().catch(() => ({}))
                   if (!res.ok) throw new Error(json.error || 'Could not send the quote.')
                   if (status === 'draft') setStatus('sent')
-                  setSuccess(json.message || 'Quote emailed.')
+                  setEmailMsg({ ok: true, text: json.message || 'Quote emailed.' })
                 } catch (err) {
-                  setError(err instanceof Error ? err.message : 'Could not send the quote.')
+                  // Shown next to the button: the page-level banner is at the
+                  // top, off-screen from here, so a failure looked like nothing.
+                  setEmailMsg({ ok: false, text: err instanceof Error ? err.message : 'Could not send the quote.' })
                 } finally {
                   setEmailing(false)
                 }
@@ -358,6 +360,9 @@ export default function EstimateDetailPage({ params }: { params: Promise<{ id: s
               {emailing ? 'Sending…' : 'Email quote'}
             </button>
           </div>
+          {emailMsg && (
+            <p className={`mt-2 text-sm ${emailMsg.ok ? 'text-green-700' : 'text-red-600'}`}>{emailMsg.text}</p>
+          )}
         </div>
 
         {/* Job link — connect the quote to a job so approval seeds billing */}

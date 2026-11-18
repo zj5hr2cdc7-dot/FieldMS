@@ -515,7 +515,7 @@ function InvoicesTab({ invoices, financials, caps, tenantId, jobId, userId, acto
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="font-semibold text-slate-900 font-mono">{inv.invoice_number}</p>
-              <p className="text-xs text-slate-500 capitalize mt-0.5">{inv.kind} invoice{inv.progress_percent ? ` · ${inv.progress_percent}%` : ''}{inv.due_date ? ` · due ${new Date(inv.due_date).toLocaleDateString('en-AU')}` : ''}</p>
+              <p className="text-xs text-slate-500 capitalize mt-0.5">{inv.kind === 'tax' && !(Number(inv.gst_amount) > 0) ? '' : `${inv.kind} `}invoice{inv.progress_percent ? ` · ${inv.progress_percent}%` : ''}{inv.due_date ? ` · due ${new Date(inv.due_date).toLocaleDateString('en-AU')}` : ''}</p>
             </div>
             <div className="text-right">
               <p className="text-lg font-bold text-slate-900">{money(inv.total_inc_gst)}</p>

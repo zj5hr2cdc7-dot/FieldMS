@@ -60,8 +60,8 @@ export default function EstimatesPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Estimates</h1>
-          <p className="text-slate-500 mt-1">Browse and manage estimates for {currentTenant?.name || 'your workspace'}</p>
+          <h1 className="text-3xl font-bold text-slate-900">Quotes</h1>
+          <p className="text-slate-500 mt-1">Quotes for {currentTenant?.name || 'your workspace'}</p>
         </div>
         <div className="flex items-center gap-3">
           <select
@@ -82,7 +82,7 @@ export default function EstimatesPage() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M5 12h14"/><path d="M12 5v14"/>
             </svg>
-            New estimate
+            New quote
           </Link>
         </div>
       </div>

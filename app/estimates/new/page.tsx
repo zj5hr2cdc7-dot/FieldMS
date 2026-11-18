@@ -263,7 +263,7 @@ export default function NewEstimatePage() {
         {/* Total + submit */}
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm text-slate-500">Estimate total</p>
+            <p className="text-sm text-slate-500">Quote total</p>
             <p className="text-3xl font-bold text-slate-900 mt-1">A${total.toFixed(2)}</p>
           </div>
           <button
@@ -271,7 +271,7 @@ export default function NewEstimatePage() {
             disabled={submitting}
             className="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-brand hover:bg-brand-dark text-white text-sm font-semibold shadow-sm transition-colors disabled:opacity-50"
           >
-            {submitting ? 'Saving…' : 'Save estimate'}
+            {submitting ? 'Saving…' : 'Save quote'}
           </button>
         </div>
 
