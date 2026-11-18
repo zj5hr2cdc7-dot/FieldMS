@@ -156,7 +156,7 @@ export default function TestSheetsPage() {
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Test sheets & certificates</h1>
         <p className="text-slate-500 mt-1">
-          Record AS/NZS 3000 test results per circuit and issue a shareable safety certificate — no second app needed.
+          Record your test results per circuit and issue a certificate your customer can open on their phone. You sign it; FieldMS keeps the record.
         </p>
       </div>
 

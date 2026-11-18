@@ -42,3 +42,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Phone photos dropped into the repo folder (IMG_4466 2.JPG was committed by accident)
+IMG_*.JPG
+IMG_*.jpg
+IMG_*.HEIC

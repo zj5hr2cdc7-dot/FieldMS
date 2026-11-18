@@ -451,6 +451,13 @@ export default function JobsPage() {
                     <Link href={`/dashboard/forms?job=${job.id}`} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
                       Forms
                     </Link>
+                    {/* Test results, certificate, invoice, complete. Only the
+                        field app linked here, so the owner had no way in. */}
+                    {job.status === 'in_progress' && (
+                      <Link href={`/dashboard/finish/${job.id}`} className="rounded-lg border border-brand/40 bg-brand/5 px-3 py-1.5 text-xs font-semibold text-brand-dark hover:bg-brand/10 transition-colors">
+                        Finish job
+                      </Link>
+                    )}
 
                     {/* One-tap status advance */}
                     {advance && (

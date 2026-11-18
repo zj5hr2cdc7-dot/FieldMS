@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useAuthContext } from '@/context/AuthContext'
 import { normaliseRole } from '@/lib/roles'
+import { CUSTOMER_PAYMENTS_ENABLED } from '@/lib/features'
 import {
   getSubscription,
   getPaymentAccountStatus,
@@ -188,7 +189,10 @@ export default function PlanPage() {
         )}
       </section>
 
-      {/* ── Get paid online ── */}
+      {/* ── Get paid online ── hidden while customer payments are switched
+          off: the invoice page shows no Pay now button, so offering to set it
+          up promised something the customer would never see. */}
+      {CUSTOMER_PAYMENTS_ENABLED && (
       <section className={card}>
         <h2 className="text-lg font-semibold text-slate-900">Get paid online</h2>
         <p className="mt-1 text-sm text-slate-600">
@@ -231,6 +235,7 @@ export default function PlanPage() {
           )}
         </div>
       </section>
+      )}
 
       {/* ── Your data ── */}
       {isOwner && (
