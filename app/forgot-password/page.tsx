@@ -44,21 +44,22 @@ export default function ForgotPasswordPage() {
             </div>
             <h2 className="mt-5 text-2xl font-black tracking-tight text-slate-900">Check your inbox</h2>
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              If an account exists for <span className="font-semibold text-slate-700">{email}</span>, a reset
-              link is on its way. It expires in an hour.
+              If an account exists for <span className="font-semibold text-slate-700">{email}</span>, an email
+              with a six digit code and a reset link is on its way. Both expire in an hour.
             </p>
             <p className="mt-4 rounded-lg bg-slate-50 p-4 text-sm leading-6 text-slate-500">
               Nothing arriving? Check spam, and make sure the address is the one you signed up with.
             </p>
             <p className="mt-3 rounded-lg bg-amber-50 p-4 text-sm leading-6 text-amber-800">
-              If the link says it has already expired, your mail provider probably opened it first to
-              scan it. Use the six digit code in the same email instead.
+              Easiest on a phone: tap the button below and type in the six digit code. If you use the
+              link instead and it says it has already expired, your mail provider probably opened it
+              first to scan it, so use the code.
             </p>
             <Link
               href={`/reset-password?email=${encodeURIComponent(email)}`}
               className="btn btn-primary btn-lg mt-6 block w-full text-center"
             >
-              Enter code manually
+              Enter my code
             </Link>
             <button
               type="button"
@@ -77,7 +78,7 @@ export default function ForgotPasswordPage() {
           <>
             <h2 className="text-2xl font-black tracking-tight text-slate-900">Reset your password</h2>
             <p className="mt-2 text-sm text-slate-500">
-              Enter the email on your account and we&apos;ll send you a link to set a new password.
+              Enter the email on your account and we&apos;ll send you a six digit code and a link to set a new password.
             </p>
 
             {error && (
@@ -101,7 +102,7 @@ export default function ForgotPasswordPage() {
                 />
               </div>
               <button type="submit" disabled={loading || !email.trim()} className="btn btn-primary btn-lg w-full">
-                {loading ? 'Sending…' : 'Send reset link'}
+                {loading ? 'Sending…' : 'Send reset code'}
               </button>
             </form>
 

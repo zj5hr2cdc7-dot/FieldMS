@@ -40,7 +40,7 @@ export default function MarketingNav() {
         <div className="flex items-center gap-2">
           <Link href="/login" className="rounded-lg px-3.5 py-2 text-sm font-semibold text-slate-600 transition-colors hover:text-slate-900">Log in</Link>
           <Link href="/signup" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark">
-            Get early access
+            Start free trial
           </Link>
         </div>
       </div>
