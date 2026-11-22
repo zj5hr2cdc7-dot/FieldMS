@@ -239,6 +239,7 @@ Charge once a lawyer has read the terms and the isolation test is green.
 ## Email (Resend) — done 22 Nov 2026
 
 - Domain fieldms.com.au verified in Resend (Tokyo region); DKIM and SPF records added at GoDaddy via Domain Connect.
-- Vercel: RESEND_API_KEY = the "FieldMS production" key (sending only, fieldms.com.au only);
+- Vercel: RESEND_API_KEY = the "FieldMS app and sign-up emails" key (sending only, all domains);
   RESEND_FROM_EMAIL = notifications@fieldms.com.au. Customers see the business's own name as sender.
-- Still to do: point Supabase Auth's SMTP at Resend so sign-up emails aren't capped at 2 an hour.
+- Supabase Auth SMTP: smtp.resend.com:465, user "resend", password = the same key. Sign-up and
+  password-reset emails now go through Resend (30/hour limit, raise under Auth > Rate Limits).
