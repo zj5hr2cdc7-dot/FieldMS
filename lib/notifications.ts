@@ -3,6 +3,7 @@ import { Resend } from 'resend'
 import type { JobEventType } from '@/types/database'
 import { escapeHtml } from '@/lib/message-templates'
 import { getSmsQuota, recordSmsAttempt, exhaustedMessage } from '@/lib/sms-quota'
+import { createAdminClient } from '@/utils/supabase/admin'
 
 /**
  * Customer notifications (SMS via Twilio, email via Resend).
@@ -84,6 +85,32 @@ function getResendClient() {
   return new Resend(apiKey)
 }
 
+/**
+ * Where a customer's reply should land. Emails go out from
+ * notifications@fieldms.com.au, which has no inbox, so without a Reply-To a
+ * customer answering a quote ("can you come Tuesday?") would be talking to
+ * nobody. Replies go to the workspace owner(s) instead, the same people the
+ * reminder emails already reply to. A failed lookup never blocks the send.
+ */
+async function replyToFor(tenantId: string): Promise<string[] | undefined> {
+  try {
+    const admin = createAdminClient()
+    const { data: owners } = await admin
+      .from('tenant_members')
+      .select('user_id')
+      .eq('tenant_id', tenantId)
+      .eq('role', 'owner')
+    const ids = (owners ?? []).map((o) => o.user_id)
+    if (ids.length === 0) return undefined
+    const { data: profiles } = await admin.from('profiles').select('email').in('id', ids)
+    const emails = (profiles ?? []).map((p) => p.email).filter((e): e is string => !!e)
+    return emails.length ? emails : undefined
+  } catch (err) {
+    console.error('Reply-To lookup failed:', err)
+    return undefined
+  }
+}
+
 /** Shared sender so the two public functions cannot drift apart. */
 async function deliver({
   tenantId,
@@ -144,11 +171,16 @@ async function deliver({
     const configured = process.env.RESEND_FROM_EMAIL ?? 'notifications@fieldms.app'
     const address = configured.includes('<') ? configured.split('<')[1].replace('>', '') : configured
     try {
+      const replyTo = await replyToFor(tenantId)
       const res = await client.emails.send({
         from: `${businessName} <${address}>`,
         to: customerEmail,
+        replyTo,
         subject,
         html,
+        // A plain-text part alongside the HTML: some customers read mail as
+        // text, and mail filters trust HTML-only messages less.
+        text,
       })
       // The Resend SDK reports rejections in the body rather than by throwing,
       // so a thrown error is not the only failure to check for.
