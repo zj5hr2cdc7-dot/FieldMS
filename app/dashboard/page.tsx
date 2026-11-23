@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuthContext } from '@/context/AuthContext'
 import Link from 'next/link'
 import { getJobs, updateJob } from '@/lib/jobs'
@@ -15,20 +15,37 @@ const fmt = (n: number) =>
   n.toLocaleString('en-AU', { style: 'currency', currency: 'AUD', maximumFractionDigits: 0 })
 
 export default function DashboardPage() {
-  const { currentTenant, session } = useAuthContext()
+  const { currentTenant, session, loading: authLoading } = useAuthContext()
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [pnl, setPnl] = useState<QuarterlyPnL[]>([])
   const [pnlLoading, setPnlLoading] = useState(true)
   const [activeQuarter, setActiveQuarter] = useState<string>('')
 
-  const fetchJobs = () => {
+  // Never spin forever: if jobs haven't arrived in 8 seconds, stop and offer
+  // a retry instead of a page that only ever says "Loading".
+  const fetchJobs = useCallback(() => {
     if (!currentTenant) return
-    getJobs(currentTenant.id).then(setJobs).finally(() => setLoading(false))
-  }
+    setLoadError(false)
+    let settled = false
+    const timer = setTimeout(() => {
+      if (!settled) { setLoading(false); setLoadError(true) }
+    }, 8000)
+    getJobs(currentTenant.id)
+      .then((j) => { settled = true; setJobs(j); setLoadError(false) })
+      .catch(() => { settled = true; setLoadError(true) })
+      .finally(() => { clearTimeout(timer); setLoading(false) })
+  }, [currentTenant])
 
-  useEffect(() => { fetchJobs() }, [currentTenant])
+  useEffect(() => { fetchJobs() }, [fetchJobs])
+
+  // Signed in but no workspace yet (the layout is redirecting to setup):
+  // don't sit on a spinner while that happens.
+  useEffect(() => {
+    if (!authLoading && !currentTenant) queueMicrotask(() => setLoading(false))
+  }, [authLoading, currentTenant])
 
   useEffect(() => {
     if (!currentTenant) return
@@ -80,10 +97,34 @@ export default function DashboardPage() {
   const name = session?.profile?.full_name?.split(' ')[0] || 'there'
   const activeQ = pnl.find(q => q.quarter === activeQuarter)
 
+  // While jobs load, show the real page shape straight away: greeting, the
+  // things you can do without waiting, and placeholders where numbers go.
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex h-64 items-center justify-center">
-        <div className="text-slate-400">Loading…</div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">{greet()}, {name}</h1>
+            <p className="text-slate-500 mt-1 text-sm">Getting today&apos;s jobs…</p>
+          </div>
+          <Link href="/dashboard/jobs?new=1" className="inline-flex items-center gap-2 rounded-lg bg-brand hover:bg-brand-dark px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors">
+            New job
+          </Link>
+        </div>
+        <QuickLinks />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {['Open', 'In Progress', 'Due Today', 'Done This Week'].map((label) => (
+            <div key={label} className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{label}</p>
+              <div className="mt-3 h-9 w-12 animate-pulse rounded bg-slate-200" />
+            </div>
+          ))}
+        </div>
+        <div className="space-y-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-16 animate-pulse rounded-xl border border-slate-200 bg-white" />
+          ))}
+        </div>
       </div>
     )
   }
@@ -92,6 +133,15 @@ export default function DashboardPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
       <GettingStarted />
+
+      {loadError && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <span>We couldn&apos;t load your jobs just now. Your data is safe, this is usually a slow connection.</span>
+          <button onClick={() => { setLoading(true); fetchJobs() }} className="rounded-lg bg-white px-3 py-1.5 font-semibold text-amber-900 ring-1 ring-amber-300 hover:bg-amber-100">
+            Try again
+          </button>
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -370,6 +420,25 @@ function JobRow({ job, onAdvance, advancing }: { job: Job; onAdvance: (j: Job) =
           </button>
         )}
       </div>
+    </div>
+  )
+}
+
+/** Shortcuts that work before any data has loaded. */
+function QuickLinks() {
+  const links = [
+    { href: '/estimates/new', label: 'New quote' },
+    { href: '/dashboard/schedule', label: 'Schedule' },
+    { href: '/dashboard/jobs', label: 'All jobs' },
+    { href: '/dashboard/customers', label: 'Customers' },
+  ]
+  return (
+    <div className="flex flex-wrap gap-2">
+      {links.map((l) => (
+        <Link key={l.href} href={l.href} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+          {l.label}
+        </Link>
+      ))}
     </div>
   )
 }

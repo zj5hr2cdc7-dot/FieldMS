@@ -13,7 +13,7 @@ import type { Job } from '@/types/database'
 const PRIORITY_DOT: Record<string, string> = { urgent: 'bg-red-500', high: 'bg-amber-500', medium: 'bg-sky-500', low: 'bg-slate-400' }
 
 export default function FieldHome() {
-  const { currentTenant, session } = useAuthContext()
+  const { currentTenant, session, loading: authLoading } = useAuthContext()
   const userId = session?.user?.id
 
   const [jobs, setJobs] = useState<Job[]>([])
@@ -21,17 +21,44 @@ export default function FieldHome() {
   const [today, setToday] = useState<TimeEntry[]>([])
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [busy, setBusy] = useState(false)
 
   const refresh = useCallback(async () => {
     if (!currentTenant || !userId) return
-    const [j, o, t, a] = await Promise.all([
+    // Each piece loads on its own: one slow or failing part (say,
+    // announcements) shouldn't blank out the jobs that did arrive.
+    const [j, o, t, a] = await Promise.allSettled([
       getMyJobs(userId), getOpenEntries(userId), getEntriesInRange(userId, startOfTodayIso()), getAnnouncements(currentTenant.id),
     ])
-    setJobs(j); setOpen(o); setToday(t); setAnnouncements(a); setLoading(false)
+    if (j.status === 'fulfilled') setJobs(j.value)
+    if (o.status === 'fulfilled') setOpen(o.value)
+    if (t.status === 'fulfilled') setToday(t.value)
+    if (a.status === 'fulfilled') setAnnouncements(a.value)
+    setLoading(false)
+    if ([j, o, t, a].some((r) => r.status === 'rejected')) throw new Error('partial load')
   }, [currentTenant, userId])
 
-  useEffect(() => { let a = true; (async () => { try { await refresh() } catch { if (a) setLoading(false) } })(); return () => { a = false } }, [refresh])
+  // Never spin forever: show the page after 8 seconds with a retry, and
+  // stop waiting if there's no workspace or user to load for.
+  const load = useCallback(() => {
+    if (!currentTenant || !userId) return
+    let alive = true
+    let settled = false
+    setLoadError(false)
+    const timer = setTimeout(() => { if (alive && !settled) { setLoading(false); setLoadError(true) } }, 8000)
+    refresh()
+      .then(() => { settled = true })
+      .catch(() => { settled = true; if (alive) setLoadError(true) })
+      .finally(() => { clearTimeout(timer); if (alive) setLoading(false) })
+    return () => { alive = false; clearTimeout(timer) }
+  }, [refresh, currentTenant, userId])
+
+  useEffect(() => load(), [load])
+
+  useEffect(() => {
+    if (!authLoading && (!currentTenant || !userId)) queueMicrotask(() => setLoading(false))
+  }, [authLoading, currentTenant, userId])
 
   const openOf = (kind: TimeEntryKind) => open.find((e) => e.kind === kind)
   const onShift = Boolean(openOf('shift'))
@@ -52,10 +79,27 @@ export default function FieldHome() {
   const upcoming = jobs.filter((j) => !isToday(j.due_date))
   const workedToday = netWorkedMinutes(today)
 
-  if (loading) return <p className="py-10 text-center text-slate-400">Loading your day…</p>
+  if (loading) {
+    return (
+      <div className="space-y-5">
+        <p className="text-sm text-slate-500">Getting your day ready…</p>
+        <div className="grid grid-cols-2 gap-3">
+          <Link href="/field/jobs" className="rounded-xl bg-white p-4 text-center text-sm font-semibold text-slate-800 shadow-sm">My jobs</Link>
+          <Link href="/field/timesheet" className="rounded-xl bg-white p-4 text-center text-sm font-semibold text-slate-800 shadow-sm">Timesheet</Link>
+        </div>
+        {[0, 1, 2].map((i) => <div key={i} className="h-20 animate-pulse rounded-xl bg-white shadow-sm" />)}
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-5">
+      {loadError && (
+        <div className="flex items-center justify-between gap-3 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">
+          <span>Couldn&apos;t load everything. Probably a weak signal.</span>
+          <button onClick={() => { setLoading(true); load() }} className="shrink-0 rounded-lg bg-white px-3 py-1.5 font-semibold ring-1 ring-amber-300">Retry</button>
+        </div>
+      )}
       {/* Urgent announcements */}
       {announcements.filter((a) => a.urgent).map((a) => (
         <div key={a.id} className="rounded-xl bg-red-600 p-4 text-white">
