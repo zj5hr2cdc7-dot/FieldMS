@@ -35,6 +35,13 @@ export default function LoginPage() {
       await signInWithEmail(email, password)
       router.push('/dashboard')
     } catch (err: unknown) {
+      // Signed up but never confirmed: send them to enter their code rather
+      // than showing a dead-end error.
+      const msg = err && typeof err === 'object' && 'message' in err ? String((err as { message: unknown }).message) : ''
+      if (/email not confirmed/i.test(msg)) {
+        router.push(`/verify-email?email=${encodeURIComponent(email.trim())}`)
+        return
+      }
       setError(describeAuthError(err, 'Login failed'))
     } finally {
       setLoading(false)

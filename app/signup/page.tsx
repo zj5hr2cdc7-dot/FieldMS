@@ -48,7 +48,7 @@ export default function SignupPage() {
       // Signed straight in (email confirmation off): go to the app. Otherwise
       // they confirm first. Either way, leave the button disabled so a second
       // click cannot fire a second signup and get "already registered".
-      router.replace(session ? '/dashboard' : '/verify-email')
+      router.replace(session ? '/dashboard' : `/verify-email?email=${encodeURIComponent(email.trim())}`)
       return
     } catch (err: unknown) {
       setError(describeAuthError(err, 'Signup failed'))
