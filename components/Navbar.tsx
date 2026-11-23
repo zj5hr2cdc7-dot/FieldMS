@@ -30,6 +30,7 @@ const moreLinks = [
   { label: 'Compliance', href: '/dashboard/compliance' },
   { label: 'Settings', href: '/dashboard/settings' },
   { label: 'Materials', href: '/dashboard/materials' },
+  { label: 'Supplier bills', href: '/dashboard/supplier-bills' },
   { label: 'Forms', href: '/dashboard/forms' },
   { label: 'Test Sheets', href: '/dashboard/test-sheets' },
   { label: 'Site Reports', href: '/dashboard/reports' },

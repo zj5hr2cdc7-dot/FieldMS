@@ -29,6 +29,7 @@ const pct = (n: number) => `${n.toFixed(1)}%`
 const hrs = (n: number) => `${n.toLocaleString('en-AU', { maximumFractionDigits: 1 })} hrs`
 
 const COST_KINDS = [
+  ['materials', 'Materials'],
   ['subcontractor', 'Subcontractor'],
   ['plant_hire', 'Plant hire'],
   ['permit', 'Permit'],
