@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/utils/supabase/admin'
-import { requireTenantRole } from '@/lib/authz'
+import { requireActiveAccess, requireTenantRole } from '@/lib/authz'
 import { SITE_URL } from '@/lib/seo'
 
 /**
@@ -44,6 +44,10 @@ export async function POST(request: Request) {
 
   const authz = await requireTenantRole(tenantId, ['owner'])
   if (!authz.ok) return NextResponse.json({ error: authz.error }, { status: authz.status })
+
+  // An expired workspace must not grow. Reading and exporting stay open.
+  const access = await requireActiveAccess(tenantId)
+  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status })
 
   const admin = createAdminClient()
 

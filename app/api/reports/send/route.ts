@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
+import { requireActiveAccess } from '@/lib/authz'
 import { sendCustomerLink, anyDelivered, describeDelivery } from '@/lib/notifications'
 
 /**
@@ -39,6 +40,12 @@ export async function POST(request: Request) {
   if (!membership) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
+
+  // Every send costs money, so it stops when the trial does. Reading and
+  // exporting stay open, and the customer-facing token routes are NOT gated:
+  // their customer is not the one whose trial ran out.
+  const access = await requireActiveAccess(report.tenant_id)
+  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status })
 
   const [{ data: job }, { data: tenant }] = await Promise.all([
     admin.from('jobs').select('title, customer_name, customer_phone, customer_email').eq('id', report.job_id).single(),

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { requireJobAccess } from '@/lib/authz'
+import { requireActiveAccess, requireJobAccess } from '@/lib/authz'
 import { loadJobMessageContext, missingForJob, renderForJob, sendAndLog } from '@/lib/customer-messaging'
 
 /**
@@ -27,6 +27,12 @@ export async function POST(request: Request) {
 
   const authz = await requireJobAccess(jobId)
   if (!authz.ok) return NextResponse.json({ error: authz.error }, { status: authz.status })
+
+  // Every send costs money. Blocked on expiry; the customer-facing token
+  // routes are deliberately NOT gated, because their customer is not the
+  // one whose trial ran out.
+  const access = await requireActiveAccess(authz.tenantId)
+  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status })
 
   const str = (v: unknown) => (typeof v === 'string' ? v.slice(0, MAX_LEN) : '')
   const template = { subject: str(body.subject), sms_body: str(body.sms_body), email_body: str(body.email_body) }

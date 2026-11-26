@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { requireTenantRole } from '@/lib/authz'
+import { requireActiveAccess, requireTenantRole } from '@/lib/authz'
 import { readyConnectors } from '@/lib/pricing/connectors'
 import { refreshSupplier, type RefreshResult } from '@/lib/pricing/engine'
 
@@ -58,6 +58,10 @@ export async function POST(request: Request) {
 
   const authz = await requireTenantRole(tenantId, ['owner', 'manager'])
   if (!authz.ok) return NextResponse.json({ error: authz.error }, { status: authz.status })
+
+  // Refreshing pricing is work we pay to run, so it stops with the trial.
+  const access = await requireActiveAccess(tenantId)
+  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status })
 
   const previous = lastRefresh.get(tenantId)
   if (previous && Date.now() - previous < COOLDOWN_MS) {
